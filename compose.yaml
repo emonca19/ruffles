@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: ruffles_postgres
+    environment:
+      POSTGRES_DB: ruffles_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.4
+    container_name: ruffles_redis
+    ports:
+      - "6379:6379"
+
+  django:
+    build: ./backend
+    container_name: ruffles_django
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_NAME=ruffles_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+
+  celery:
+    build: ./backend
+    container_name: ruffles_celery
+    command: celery -A config worker -l info
+    environment:
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_NAME=ruffles_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+
+volumes:
+  postgres_data:
