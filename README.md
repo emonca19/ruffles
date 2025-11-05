@@ -4,10 +4,10 @@ A web application for managing raffles and ticket sales for non-profit associati
 
 ## Tech Stack
 
-- **Backend**: Django 5.2.7, Django REST Framework 3.16.1, Celery 5.5.3
+- **Backend**: Django 5.2.7, Django REST Framework 3.16.1
 - **Frontend**: React 19.2, Vite, Axios
 - **Database**: PostgreSQL 17 (Docker)
-- **Cache/Message Broker**: Redis 7.4 (Docker)
+- **Cache**: Redis 7.4 (Docker)
 - **Python**: 3.13
 - **Node.js**: 24 LTS
 
@@ -20,48 +20,79 @@ A web application for managing raffles and ticket sales for non-profit associati
 
 ## Quick Start
 
-### 1. Start Backend & Database (Docker)
+### 1. Setup Environment Files
 
 ```
-docker-compose up -d
+cd ruffles
+
+# Copy environment templates
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+
+# Update values as needed (defaults work for local development)
+```
+
+### 2. Start Backend & Database (Docker)
+
+```
+docker compose up -d
 
 # Backend: http://localhost:8000
 # PostgreSQL: localhost:5432
 # Redis: localhost:6379
 ```
 
-### 2. Run Frontend Locally
+### 3. Run Migrations
+
+```
+docker compose exec django python manage.py migrate
+```
+
+### 4. Create Superuser (Optional)
+
+```
+docker compose exec django python manage.py createsuperuser
+# Follow prompts to create admin account
+```
+
+### 5. Run Frontend Locally
 
 In a new terminal:
 
 ```
 cd frontend
-cp .env.example .env
 pnpm install
 pnpm run dev
 
 # Frontend: http://localhost:5173
 ```
 
-## Local Development (No Docker)
+## Local Development (Without Docker)
 
-### Backend
+### 1. Setup Environment
+
+```
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+### 2. Backend
 
 ```
 cd backend
 python3.13 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
+
+# Start PostgreSQL and Redis separately, then:
 python manage.py migrate
 python manage.py runserver
 ```
 
-### Frontend
+### 3. Frontend
 
 ```
 cd frontend
-cp .env.example .env
 pnpm install
 pnpm run dev
 ```
@@ -73,33 +104,35 @@ pnpm run dev
 ```
 ruffles/
 ├── backend/              # Django REST API (Dockerized)
-│   ├── apps/            # Django apps
+│   ├── apps/            # Django apps (authentication, raffles, purchases, payments, common)
 │   ├── config/          # Settings & URL routing
 │   └── manage.py
 ├── frontend/            # React SPA (Local development)
 │   ├── src/
 │   ├── public/
 │   └── package.json
-└── docker-compose.yml   # Backend + DB only
+└── compose.yaml   # Backend + Database orchestration
 ```
-
-## Environment Setup
-
-Copy `.env.example` to `.env`:
-
-```
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-Update values as needed for your environment.
 
 ## API Documentation
 
-Once backend is running:
-- Swagger/OpenAPI: `http://localhost:8000/api/schema/swagger/`
-- ReDoc: `http://localhost:8000/api/schema/redoc/`
+Once backend is running, access:
+- **Swagger/OpenAPI**: http://localhost:8000/api/schema/swagger/
+- **ReDoc**: http://localhost:8000/api/schema/redoc/
+- **Admin Panel**: http://localhost:8000/admin/
 
-## License
+## Development Workflow
 
-MIT
+```
+# View logs
+docker compose logs -f django
+
+# Run Django commands
+docker compose exec django python manage.py <command>
+
+# Access Django shell
+docker compose exec django python manage.py shell
+
+# Stop services
+docker compose down
+```

@@ -10,12 +10,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7.4
     container_name: ruffles_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   django:
     build: ./backend
@@ -29,25 +39,28 @@ services:
       - DB_NAME=ruffles_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
-
-  celery:
-    build: ./backend
-    container_name: ruffles_celery
-    command: celery -A config worker -l info
-    environment:
-      - DEBUG=True
-      - DB_HOST=postgres
-      - DB_NAME=ruffles_db
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./backend:/app
+      
+  # Uncomment when Celery is configured
+  # celery:
+  #   build: ./backend
+  #   container_name: ruffles_celery
+  #   command: celery -A config worker -l info
+  #   environment:
+  #     - DEBUG=True
+  #     - DB_HOST=postgres
+  #     - DB_NAME=ruffles_db
+  #     - REDIS_URL=redis://redis:6379/0
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   volumes:
+  #     - ./backend:/app
 
 volumes:
   postgres_data:
