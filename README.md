@@ -6,8 +6,8 @@ A web application for managing raffles and ticket sales for non-profit associati
 
 - **Backend**: Django 5.2.7, Django REST Framework 3.16.1, Celery 5.5.3
 - **Frontend**: React 19.2, Vite, Axios
-- **Database**: PostgreSQL 17
-- **Cache/Message Broker**: Redis 7.4
+- **Database**: PostgreSQL 17 (Docker)
+- **Cache/Message Broker**: Redis 7.4 (Docker)
 - **Python**: 3.13
 - **Node.js**: 24 LTS
 
@@ -15,31 +15,38 @@ A web application for managing raffles and ticket sales for non-profit associati
 
 - Python 3.13+
 - Node.js 24+ (LTS)
+- pnpm 9+
 - Docker & Docker Compose
-- PostgreSQL 17 (optional, if running locally without Docker)
-- Redis 7.4 (optional, if running locally without Docker)
 
 ## Quick Start
 
-### Using Docker Compose
+### 1. Start Backend & Database (Docker)
 
 ```
-# Clone and navigate to project
-git clone <repository-url>
-cd ruffles
-
-# Start all services
 docker-compose up -d
 
 # Backend: http://localhost:8000
-# Frontend: http://localhost:5173
 # PostgreSQL: localhost:5432
 # Redis: localhost:6379
 ```
 
-### Local Development
+### 2. Run Frontend Locally
 
-**Backend:**
+In a new terminal:
+
+```
+cd frontend
+cp .env.example .env
+pnpm install
+pnpm run dev
+
+# Frontend: http://localhost:5173
+```
+
+## Local Development (No Docker)
+
+### Backend
+
 ```
 cd backend
 python3.13 -m venv venv
@@ -50,37 +57,47 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-**Frontend:**
+### Frontend
+
 ```
 cd frontend
 cp .env.example .env
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
+
+**Note**: For local backend development, you'll need PostgreSQL 17 and Redis 7.4 running separately.
 
 ## Project Structure
 
 ```
 ruffles/
-├── backend/              # Django REST API
-│   ├── apps/            # Django apps (authentication, raffles, purchases, payments)
-│   ├── config/          # Django configuration & settings
+├── backend/              # Django REST API (Dockerized)
+│   ├── apps/            # Django apps
+│   ├── config/          # Settings & URL routing
 │   └── manage.py
-├── frontend/            # React SPA
+├── frontend/            # React SPA (Local development)
 │   ├── src/
 │   ├── public/
 │   └── package.json
-└── docker-compose.yml
+└── docker-compose.yml   # Backend + DB only
 ```
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` in both `backend/` and `frontend/` directories and update values as needed.
+Copy `.env.example` to `.env`:
+
+```
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Update values as needed for your environment.
 
 ## API Documentation
 
 Once backend is running:
-- Swagger/OpenAPI docs: `http://localhost:8000/api/schema/swagger/`
+- Swagger/OpenAPI: `http://localhost:8000/api/schema/swagger/`
 - ReDoc: `http://localhost:8000/api/schema/redoc/`
 
 ## License
