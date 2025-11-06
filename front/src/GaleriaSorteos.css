@@ -9,9 +9,9 @@
 
 /* Esto empuja el contenido hacia abajo 
    para que la barra de navegación no lo tape.
-   Ajusta 80px según el alto de tu navbar. */
+   Ajusta 40px según el alto de tu navbar. */
 body {
-  padding-top: 80px; 
+  padding-top: 40px; 
   background-color: var(--color-fondo);
   font-family: 'Montserrat', sans-serif; /* (Asegúrate de importar esta fuente) */
   margin: 0;
