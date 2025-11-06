@@ -1,5 +1,5 @@
 import React from 'react';
-//import './GaleriaSorteos.css'; 
+import './GaleriaSorteos.css'; 
 
 export default function TarjetaSorteo({ sorteo }) {
   
@@ -10,7 +10,6 @@ export default function TarjetaSorteo({ sorteo }) {
   });
 
   return (
-    // Usamos el data-testid del TC-HU05-001 [cite: 33]
     <div className="raffle-card" data-testid="raffle-card">
       <img 
         src={sorteo.image_url} 
