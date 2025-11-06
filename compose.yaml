@@ -38,6 +38,8 @@ services:
       - DB_HOST=postgres
       - DB_NAME=ruffles_db
       - REDIS_URL=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - PYTHONPATH=/app:/app/apps
     depends_on:
       postgres:
         condition: service_healthy

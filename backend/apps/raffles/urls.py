@@ -1,5 +1,7 @@
 from django.urls import path
+from .views import RaffleListView, OrganizerRaffleListView
 
 urlpatterns = [
-    # Raffle endpoints will go here
+    path("", RaffleListView.as_view(), name="raffle-list"),
+    path("organizer/", OrganizerRaffleListView.as_view(), name="organizer-raffle-list"),
 ]
