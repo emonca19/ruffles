@@ -1,0 +1,84 @@
+/* Archivo: src/Rifa.css */
+
+/* Importar una fuente limpia (Opcional, pero recomendado) */
+/*@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');*/
+
+/* --- Paleta de Colores --- */
+:root {
+  --color-fondo: #fdfdfb;       /* Blanco Crema */
+  --color-tarjeta: #ffffff;     /* Blanco Puro */
+  --color-texto: #4a4a4a;        /* Gris Suave */
+  --color-titulo: #a0d2eb;     /* Azul Cielo Pastel */
+  --color-detalle: #f1f8e9;     /* Menta Pálido */
+  --sombra-suave: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  margin: 0;
+  padding: 20px;
+}
+
+.rifa-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.rifa-header h1 {
+  color: var(--color-titulo);
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rifa-header p {
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+.tarjeta-premio {
+  background-color: var(--color-tarjeta);
+  border-radius: 12px;
+  padding: 30px;
+  margin-top: 30px;
+  box-shadow: var(--sombra-suave);
+  border: 1px solid #eee; /* Borde muy sutil */
+}
+
+.tarjeta-premio h2 {
+  color: var(--color-titulo);
+  margin-top: 0;
+}
+
+.premio-descripcion {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.info-seccion {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.info-item {
+  font-size: 1.1rem;
+}
+
+.info-instrucciones {
+  background-color: var(--color-detalle);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #d6e9ca; /* Borde pastel más oscuro */
+}
+
+.info-instrucciones h3 {
+  margin-top: 0;
+  color: #556b2f; /* Un verde olivo que combina con el menta */
+}
