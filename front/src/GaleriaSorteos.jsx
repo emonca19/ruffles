@@ -57,7 +57,7 @@ export default function GaleriaSorteos() {
     // Usamos un Fragment (<>) para agrupar el header y la galería
     <>
       {/* --- 1. AQUÍ ESTÁ LA SECCIÓN DE "PRESENTACIÓN" --- */}
-      <header className="galeria-header">
+      <header className="galeria-header" id='rifas'>
         <h1>Nuestros Sorteos Activos</h1>
         <p>¡Elige tu favorito, apoya a la comunidad y gana!</p>
       </header>
