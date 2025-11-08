@@ -18,9 +18,9 @@ export default function GaleriaSorteos() {
         { id: 1, name: "iPhone 15 Pro", image_url: "https://m.media-amazon.com/images/I/81fO2C9cYjL._AC_SY300_SX300_QL70_ML2_.jpg", price_per_number: 100 },
         { id: 2, name: "Canasta de Regalo", image_url: "https://mantelyservilleta.com/cdn/shop/files/RegaloCajaGourmetULTRAPremium-mantelyservilleta_1_1024x1024@2x.jpg?v=1699581917", price_per_number: 50 },
         { id: 3, name: "Viaje a la Playa", image_url: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1074", price_per_number: 250 },
-        { id: 4, name: "Audífonos Pro", image_url: "https://via.placeholder.com/300x200?text=Audio", price_per_number: 75 },
-        { id: 5, name: "Cena para Dos", image_url: "https://via.placeholder.com/300x200?text=Cena", price_per_number: 40 },
-    ];
+        { id: 4, name: "Audífonos Pro", image_url: "https://m.media-amazon.com/images/I/81fO2C9cYjL._AC_SY300_SX300_QL70_ML2_.jpg", price_per_number: 75 },
+        { id: 5, name: "Cena para Dos", image_url: "https://m.media-amazon.com/images/I/81fO2C9cYjL._AC_SY300_SX300_QL70_ML2_.jpg", price_per_number: 40 },
+      ];
       setSorteos(datosSimulados);
 
       // PRUEBA Escenario 2: Sin datos 
@@ -50,7 +50,7 @@ export default function GaleriaSorteos() {
     );
   }
 
-  
+
 
   // Escenario con Datos
   return (

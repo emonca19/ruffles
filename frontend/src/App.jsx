@@ -1,25 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import GaleriaSorteos from './GaleriaSorteos.jsx'
-import Navbar from '../NavBar.jsx'
-
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Navbar from './Navbar.jsx';
+import GaleriaSorteos from './GaleriaSorteos.jsx';
+import RegistroSorteo from './RegistroSorteo.jsx';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div className='App'>
-        <Navbar />
+    <div className='App'>
+      <Navbar />
 
-        <main className='app-content'>
-          <GaleriaSorteos />
-        </main>
-        
-      </div>
-    </>
-  )
+      <main className='app-content'>
+        <Routes>
+          <Route path="/" element={<GaleriaSorteos />} />
+
+
+          <Route path="/rifas" element={<GaleriaSorteos />} />
+          <Route path="/inicio" element={<RegistroSorteo />} />
+          <Route path="/contacto" element={<GaleriaSorteos />} />
+        </Routes>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
