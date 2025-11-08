@@ -12,10 +12,8 @@ function App() {
       <main className='app-content'>
         <Routes>
           <Route path="/" element={<GaleriaSorteos />} />
-
-
           <Route path="/rifas" element={<GaleriaSorteos />} />
-          <Route path="/inicio" element={<RegistroSorteo />} />
+          <Route path="/registro" element={<RegistroSorteo />} />
           <Route path="/contacto" element={<GaleriaSorteos />} />
         </Routes>
       </main>
