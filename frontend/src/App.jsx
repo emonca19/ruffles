@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
 import GaleriaSorteos from './GaleriaSorteos.jsx';
 import RegistroSorteo from './RegistroSorteo.jsx';
+import Inicio from './Inicio.jsx';
 
 function App() {
   return (
@@ -11,7 +12,7 @@ function App() {
 
       <main className='app-content'>
         <Routes>
-          <Route path="/" element={<GaleriaSorteos />} />
+          <Route path="/Inicio" element={<Inicio />} />
           <Route path="/rifas" element={<GaleriaSorteos />} />
           <Route path="/registro" element={<RegistroSorteo />} />
           <Route path="/contacto" element={<GaleriaSorteos />} />

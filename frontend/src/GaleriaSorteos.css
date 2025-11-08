@@ -1,19 +1,21 @@
 :root {
-  --color-fondo: #fdfdfb;
+  --color-fondo: #f4f7f9;
   --color-tarjeta: #ffffff;
-  --color-texto: #4a4a4a;
-  --color-titulo-acento: #a0d2eb;
-  --color-detalle-fondo: #f1f8e9;
-  --sombra-suave: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --color-texto: #333333;
+  --color-titulo-acento: #4f46e5;
+  --color-detalle-fondo: #eef2ff;
+  --color-exito: #22c55e;
+  --color-exito-hover: #16a34a;
+  --sombra-suave: 0 6px 18px rgba(0, 0, 0, 0.06);
+  --sombra-hover: 0 12px 25px rgba(0, 0, 0, 0.12);
 }
 
 /* Esto empuja el contenido hacia abajo 
    para que la barra de navegación no lo tape.
    Ajusta 40px según el alto de tu navbar. */
 body {
-  padding-top: 40px; 
   background-color: var(--color-fondo);
-  font-family: 'Montserrat', sans-serif; /* (Asegúrate de importar esta fuente) */
+  font-family: 'Inter', sans-serif;
   margin: 0;
 }
 
@@ -21,125 +23,209 @@ body {
   text-align: center;
   padding: 40px 20px;
   background-color: var(--color-detalle-fondo);
-  border-radius: 12px;
-  margin: 20px auto 40px auto; 
+  border-radius: 16px;
+  margin: 30px auto 50px auto;
   max-width: 1200px;
-  border: 1px solid #d6e9ca;
+  border: 2px solid var(--color-titulo-acento);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.08);
 }
 
 .galeria-header h1 {
   color: var(--color-titulo-acento);
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 5vw, 3rem);
   margin: 0 0 10px 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .galeria-header p {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
   color: var(--color-texto);
-  opacity: 0.8;
+  opacity: 0.9;
   margin: 0;
 }
 
+/* --- Distribución de tarjetas con grid responsive --- */
 .raffle-gallery {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 32px;
   padding: 20px;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 640px) {
   .raffle-gallery {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .raffle-gallery {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
+@media (min-width: 1280px) {
+  .raffle-gallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* --- Tarjetas individuales de rifas --- */
 .raffle-card {
   background-color: var(--color-tarjeta);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: var(--sombra-suave);
-  border: 1px solid #eee;
-  overflow: hidden; 
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
   display: flex;
   flex-direction: column;
 }
 
 .raffle-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.07);
+  transform: translateY(-6px);
+  box-shadow: var(--sombra-hover);
+  border-color: var(--color-titulo-acento);
 }
 
+/* --- Imagen dentro de la tarjeta --- */
 .raffle-image {
   width: 100%;
-  height: 220px;
+  height: 200px;
   object-fit: cover;
   background-color: var(--color-fondo);
-  color: var(--color-texto);
+  transition: transform 0.5s ease;
 }
 
+.raffle-card:hover .raffle-image {
+  transform: scale(1.04);
+}
+
+/* --- Información textual de la rifa --- */
 .raffle-info {
-  padding: 20px;
-  flex-grow: 1; 
+  padding: 24px;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
 .raffle-name {
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: var(--color-texto);
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
 }
 
 .raffle-price {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--color-titulo-acento); 
-  margin: 0;
-  margin-top: auto; 
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-titulo-acento);
+  margin-top: auto;
 }
 
+/* --- Botón de participar --- */
+.raffle-participar-btn {
+  margin-top: 14px;
+  padding: 10px 16px;
+  background-color: var(--color-exito);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+}
+
+.raffle-participar-btn:hover {
+  background-color: var(--color-exito-hover);
+  transform: translateY(-2px);
+}
+
+/* --- Estado de carga --- */
 .raffle-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 80px;
   min-height: 400px;
-  gap: 15px;
+  gap: 20px;
   color: var(--color-texto);
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid var(--color-detalle-fondo); 
-  border-top-color: var(--color-titulo-acento); 
+  width: 60px;
+  height: 60px;
+  border: 6px solid var(--color-detalle-fondo);
+  border-top-color: var(--color-titulo-acento);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* --- Estado vacío (sin rifas disponibles) --- */
 .raffle-empty-state {
-  padding: 40px;
+  padding: 60px;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--color-texto);
   background-color: var(--color-detalle-fondo);
+  border-radius: 12px;
+  border: 2px dashed var(--color-titulo-acento);
+  max-width: 900px;
+  margin: 50px auto;
+}
+
+/* --- Navegación entre páginas de rifas --- */
+.raffle-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px 0;
+}
+
+.raffle-nav button {
+  padding: 8px 14px;
+  border: none;
   border-radius: 8px;
-  border: 1px solid #d6e9ca; 
-  max-width: 800px;
-  margin: 40px auto;
+  cursor: pointer;
+  background-color: #e5e7eb;
+  color: #333;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.raffle-nav button.active {
+  background-color: var(--color-titulo-acento);
+  color: white;
+}
+
+.raffle-nav button:hover:not(.active) {
+  background-color: #d1d5db;
+}
+
+.raffle-btn {
+  background-color: #ffcc00;
+  color: #222;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.raffle-btn:hover {
+  background-color: #ffdb4d;
+  transform: scale(1.05);
 }
