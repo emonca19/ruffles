@@ -1,0 +1,72 @@
+.registro-container {
+  max-width: 800px;
+  margin: 0 auto 40px auto;
+  padding: 0 20px;
+}
+
+.registro-form {
+  background-color: var(--color-tarjeta);
+  border-radius: 16px;
+  box-shadow: var(--sombra-suave);
+  border: 1px solid #e5e7eb;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--color-texto);
+  font-size: 1rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="number"],
+.form-group input[type="date"] {
+  padding: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--color-texto);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-titulo-acento); 
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); 
+}
+
+.form-group small {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: -4px;
+}
+
+.submit-button {
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  
+  background-color: var(--color-exito);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 10px;
+}
+
+.submit-button:hover {
+  background-color: var(--color-exito-hover);
+  transform: translateY(-2px);
+}
