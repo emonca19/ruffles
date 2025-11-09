@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Self
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -5,15 +8,15 @@ from django.db import models
 from django.utils import timezone
 
 
-class RaffleQuerySet(models.QuerySet):
-    def active(self):
+class RaffleQuerySet(models.QuerySet["Raffle"]):
+    def active(self) -> Self:
         return self.filter(deleted_at__isnull=True)
 
-    def currently_on_sale(self):
+    def currently_on_sale(self) -> Self:
         now = timezone.now()
         return self.active().filter(sale_start_at__lte=now, sale_end_at__gte=now)
 
-    def upcoming(self):
+    def upcoming(self) -> Self:
         return self.active().filter(sale_start_at__gt=timezone.now())
 
 
@@ -79,7 +82,7 @@ class Raffle(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = {}
 
@@ -116,17 +119,17 @@ class Raffle(models.Model):
         if errors:
             raise ValidationError(errors)
 
-    def mark_deleted(self, timestamp=None):
+    def mark_deleted(self, timestamp: datetime | None = None) -> None:
         self.deleted_at = timestamp or timezone.now()
         self.save(update_fields=["deleted_at"])
 
     @property
-    def is_on_sale(self):
+    def is_on_sale(self) -> bool:
         if self.deleted_at is not None:
             return False
         now = timezone.now()
         return self.sale_start_at <= now <= self.sale_end_at
 
     @property
-    def has_winner(self):
+    def has_winner(self) -> bool:
         return self.winner_number is not None
