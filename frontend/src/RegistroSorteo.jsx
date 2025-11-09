@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import './RegistroSorteo.css'; // Importamos los nuevos estilos para el formulario
-import './GaleriaSorteos.css'; // Reusamos los estilos del header
+import './RegistroSorteo.css';
+import './GaleriaSorteos.css';
 
 export default function RegistroSorteo() {
-  
-  // Estado para guardar todos los datos del formulario
+
   const [formData, setFormData] = useState({
     title: '',
     imageUrl: '',
@@ -12,7 +11,6 @@ export default function RegistroSorteo() {
     endDate: ''
   });
 
-  // Un solo manejador para actualizar todos los inputs
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData(prevData => ({
@@ -20,16 +18,13 @@ export default function RegistroSorteo() {
       [name]: value
     }));
   };
-
-  // Manejador para cuando se envía el formulario
+  
   const handleSubmit = (event) => {
-    event.preventDefault(); // Previene que la página se recargue
+    event.preventDefault(); 
     
-    // Aquí es donde enviarías los datos a tu API (backend)
-    // Por ahora, solo los mostramos en la consola
+    // Aquí es donde se enviarian los datos a la API
     console.log('Datos del formulario para enviar:', formData);
 
-    // Opcional: Limpiar el formulario después de enviar
     setFormData({
       title: '',
       imageUrl: '',
