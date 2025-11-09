@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self
+from typing import ClassVar, Self
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -18,6 +18,20 @@ class RaffleQuerySet(models.QuerySet["Raffle"]):
 
     def upcoming(self) -> Self:
         return self.active().filter(sale_start_at__gt=timezone.now())
+
+
+class RaffleManager(models.Manager["Raffle"]):
+    def get_queryset(self) -> RaffleQuerySet:
+        return RaffleQuerySet(self.model, using=self._db)
+
+    def active(self) -> RaffleQuerySet:
+        return self.get_queryset().active()
+
+    def currently_on_sale(self) -> RaffleQuerySet:
+        return self.get_queryset().currently_on_sale()
+
+    def upcoming(self) -> RaffleQuerySet:
+        return self.get_queryset().upcoming()
 
 
 class Raffle(models.Model):
@@ -59,7 +73,7 @@ class Raffle(models.Model):
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    objects = RaffleQuerySet.as_manager()
+    objects: ClassVar[RaffleManager] = RaffleManager()
 
     class Meta:
         app_label = "raffles"

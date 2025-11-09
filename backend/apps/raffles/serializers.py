@@ -1,0 +1,81 @@
+from typing import ClassVar
+
+from django.utils import timezone
+
+from rest_framework import serializers
+
+from .models import Raffle
+
+
+class RaffleBaseSerializer(serializers.ModelSerializer):
+    state = serializers.SerializerMethodField()
+    is_on_sale = serializers.SerializerMethodField()
+    has_winner = serializers.SerializerMethodField()
+    organizer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Raffle
+        fields: ClassVar[list[str]] = [
+            "id",
+            "name",
+            "description",
+            "image_url",
+            "number_start",
+            "number_end",
+            "price_per_number",
+            "sale_start_at",
+            "sale_end_at",
+            "draw_scheduled_at",
+            "winner_number",
+            "organizer_name",
+            "state",
+            "is_on_sale",
+            "has_winner",
+        ]
+        read_only_fields = fields
+
+    def get_state(self, obj: Raffle) -> str:
+        if obj.deleted_at:
+            return "archived"
+        if obj.winner_number is not None:
+            return "completed"
+        now = timezone.now()
+        if now < obj.sale_start_at:
+            return "upcoming"
+        if obj.sale_start_at <= now <= obj.sale_end_at:
+            return "selling"
+        if now <= obj.draw_scheduled_at:
+            return "closed"
+        return "archived"
+
+    def get_is_on_sale(self, obj: Raffle) -> bool:
+        return obj.is_on_sale
+
+    def get_has_winner(self, obj: Raffle) -> bool:
+        return obj.has_winner
+
+    def get_organizer_name(self, obj: Raffle) -> str | None:
+        organizer = obj.organizer
+        if not organizer:
+            return None
+        return (
+            getattr(organizer, "name", None)
+            or getattr(organizer, "get_full_name", lambda: None)()
+            or getattr(organizer, "first_name", None)
+            or getattr(organizer, "email", None)
+        )
+
+
+class PublicRaffleSerializer(RaffleBaseSerializer):
+    pass
+
+
+class OrganizerRaffleSerializer(RaffleBaseSerializer):
+    class Meta(RaffleBaseSerializer.Meta):
+        fields: ClassVar[list[str]] = [
+            *RaffleBaseSerializer.Meta.fields,
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
