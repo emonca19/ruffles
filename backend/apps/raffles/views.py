@@ -9,7 +9,11 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 
 from .models import Raffle
-from .serializers import OrganizerRaffleSerializer, PublicRaffleSerializer
+from .serializers import (
+    OrganizerRaffleSerializer,
+    OrganizerRaffleWriteSerializer,
+    PublicRaffleSerializer,
+)
 
 
 def _parse_bool_param(value: str | None) -> bool | None:
@@ -89,7 +93,7 @@ class RaffleListView(generics.ListAPIView):
         return queryset
 
 
-class OrganizerRaffleListView(generics.ListAPIView):
+class OrganizerRaffleListView(generics.ListCreateAPIView):
     request: Request
     serializer_class = OrganizerRaffleSerializer
     pagination_class = RafflePagination
@@ -115,3 +119,11 @@ class OrganizerRaffleListView(generics.ListAPIView):
         )
 
         return queryset
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return OrganizerRaffleWriteSerializer
+        return super().get_serializer_class()
+
+    def perform_create(self, serializer: OrganizerRaffleWriteSerializer) -> None:
+        serializer.save()

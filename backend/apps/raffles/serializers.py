@@ -71,11 +71,39 @@ class PublicRaffleSerializer(RaffleBaseSerializer):
 
 
 class OrganizerRaffleSerializer(RaffleBaseSerializer):
-    class Meta(RaffleBaseSerializer.Meta):
-        fields: ClassVar[list[str]] = [
-            *RaffleBaseSerializer.Meta.fields,
-            "created_at",
-            "updated_at",
-            "created_by",
-            "updated_by",
-        ]
+	class Meta(RaffleBaseSerializer.Meta):
+		fields: ClassVar[list[str]] = [
+			*RaffleBaseSerializer.Meta.fields,
+			"created_at",
+			"updated_at",
+			"created_by",
+			"updated_by",
+		]
+
+
+class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Raffle
+		fields: ClassVar[list[str]] = [
+			"name",
+			"description",
+			"image_url",
+			"number_start",
+			"number_end",
+			"price_per_number",
+			"sale_start_at",
+			"sale_end_at",
+			"draw_scheduled_at",
+		]
+
+	def create(self, validated_data: dict[str, object]) -> Raffle:
+		user = self.context["request"].user
+		raffle = Raffle(
+			organizer=user,
+			created_by=user,
+			updated_by=user,
+			**validated_data,
+		)
+		raffle.full_clean()
+		raffle.save()
+		return raffle
