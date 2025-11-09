@@ -1,6 +1,8 @@
-from django.urls import path
 from importlib import import_module
+
 from django.http import JsonResponse
+from django.urls import path
+
 from .views import RegisterView
 
 

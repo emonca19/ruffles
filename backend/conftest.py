@@ -1,12 +1,15 @@
-import pytest
-from django.contrib.auth import get_user_model
 import importlib
+
+from django.contrib.auth import get_user_model
+
+import pytest
 
 APIClient = None
 try:
     _mod = importlib.import_module("rest_framework.test")
-    APIClient = getattr(_mod, "APIClient")
+    APIClient = _mod.APIClient
 except Exception:
+
     class APIClient:
         def __init__(self):
             pass
@@ -19,6 +22,7 @@ except Exception:
 
         def post(self, *args, **kwargs):
             raise RuntimeError("rest_framework not available in this environment")
+
 
 pytestmark = pytest.mark.django_db
 
@@ -48,12 +52,13 @@ def user_factory(db):
             if is_blocked:
                 try:
                     from django.core.cache import cache
+
                     cache.set(f"user_blocked:{user.id}", True)
                 except Exception:
                     # If cache isn't available in this environment, set an
                     # attribute on the instance as a shallow fallback.
                     try:
-                        setattr(user, "is_blocked", True)
+                        user.is_blocked = True
                     except Exception:
                         pass
         except Exception:
@@ -65,7 +70,9 @@ def user_factory(db):
 
 @pytest.fixture
 def organizer_user(db, user_factory):
-    return user_factory(email="organizer@example.com", password="OrgPass123", name="Organizer")
+    return user_factory(
+        email="organizer@example.com", password="OrgPass123", name="Organizer"
+    )
 
 
 @pytest.fixture
@@ -97,17 +104,21 @@ def mocker(monkeypatch):
             if "side_effect" in kwargs:
                 se = kwargs["side_effect"]
                 if isinstance(se, Exception):
+
                     def _fn(*a, **k):
                         raise se
                 else:
+
                     def _fn(*a, **k):
                         return se(*a, **k)
+
                 monkeypatch.setattr(target, _fn, raising=False)
                 return
             if "new" in kwargs:
                 monkeypatch.setattr(target, kwargs["new"], raising=False)
                 return
             if "return_value" in kwargs:
+
                 def _fn(*a, **k):
                     return kwargs["return_value"]
 

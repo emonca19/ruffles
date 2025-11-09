@@ -1,7 +1,9 @@
-import pytest
 from django.urls import reverse
-from rest_framework.test import APIClient
+
+import pytest
 from raffles.models import Raffle
+from rest_framework.test import APIClient
+
 
 @pytest.mark.django_db
 class TestConsultarSorteosAPI:
@@ -23,7 +25,12 @@ class TestConsultarSorteosAPI:
 
     # Validation of fields visible per raffle
     def test_raffle_card_has_image_name_price(self):
-        Raffle.objects.create(name="iPhone 15", status="active", price_per_number=100, image_url="https://test.com/img.jpg")
+        Raffle.objects.create(
+            name="iPhone 15",
+            status="active",
+            price_per_number=100,
+            image_url="https://test.com/img.jpg",
+        )
         response = self.client.get(reverse("raffle-list") + "?status=active")
         card = response.data["results"][0]
         assert card["name"] == "iPhone 15"
@@ -61,7 +68,10 @@ class TestConsultarSorteosAPI:
         self.client.force_authenticate(user=organizer_user)
         response = self.client.get(reverse("organizer-raffle-list"))
         # our user factory sets first_name; compare with that
-        assert response.data["results"][0]["created_by"]["name"] == organizer_user.first_name
+        assert (
+            response.data["results"][0]["created_by"]["name"]
+            == organizer_user.first_name
+        )
 
     # Organizer without raffles
     def test_organizer_no_raffles(self, organizer_user):
@@ -79,13 +89,18 @@ class TestConsultarSorteosAPI:
     # Friendly handling of load errors
     def test_raffle_list_handles_error(self, mocker):
         url = reverse("raffle-list") + "?status=active"
-        mocker.patch("raffles.views.RaffleListView.get_queryset", side_effect=Exception("Error 500"))
+        mocker.patch(
+            "raffles.views.RaffleListView.get_queryset",
+            side_effect=Exception("Error 500"),
+        )
         response = self.client.get(url)
         assert response.status_code == 500
 
     # Handling broken images
     def test_raffle_with_broken_image(self):
-        Raffle.objects.create(name="RC", status="active", image_url="https://badurl.com/img.jpg")
+        Raffle.objects.create(
+            name="RC", status="active", image_url="https://badurl.com/img.jpg"
+        )
         response = self.client.get(reverse("raffle-list") + "?status=active")
         card = response.data["results"][0]
         assert "image_url" in card
@@ -108,7 +123,9 @@ class TestConsultarSorteosAPI:
 
     # API – List organizer's raffles (protected)
     def test_organizer_list_jwt(self, organizer_user, api_client_with_token):
-        raffle = Raffle.objects.create(name="Org", status="active", created_by=organizer_user)
+        raffle = Raffle.objects.create(
+            name="Org", status="active", created_by=organizer_user
+        )
         client = api_client_with_token(organizer_user)
         resp = client.get(reverse("organizer-raffle-list"))
         assert resp.status_code == 200
@@ -129,7 +146,7 @@ class TestConsultarSorteosAPI:
         resp = self.client.get(reverse("raffle-list") + "?status=active&page=1")
         assert resp.status_code == 200
         results = resp.data["results"]
-        assert len(results) == 10  
+        assert len(results) == 10
         assert resp.data["next"] is not None
         resp2 = self.client.get(resp.data["next"])
         assert len(resp2.data["results"]) == 10
@@ -144,9 +161,11 @@ class TestConsultarSorteosAPI:
     # Timeout on slow requests (simulate delay and capture timeout)
     def test_raffle_list_timeout(self, monkeypatch):
         import time
+
         def slow_list(*args, **kwargs):
             time.sleep(31)
             return Raffle.objects.none()
+
         monkeypatch.setattr("raffles.views.RaffleListView.get_queryset", slow_list)
         resp = self.client.get(reverse("raffle-list"))
         assert resp.status_code in (504, 408, 200)

@@ -1,0 +1,69 @@
+[tool.ruff]
+# Set line length to match Django conventions
+line-length = 88
+
+# Target Python 3.13
+target-version = "py313"
+
+# Exclude common directories
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "migrations",
+    "node_modules",
+    "staticfiles",
+    "media",
+]
+
+[tool.ruff.lint]
+# Enable rule sets
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "I",     # isort (import sorting)
+    "B",     # bugbear (common bugs)
+    "C4",    # flake8-comprehensions
+    "DJ",    # Django-specific rules
+    "UP",    # pyupgrade (modern Python syntax)
+    "SIM",   # simplify
+    "RUF",   # Ruff-specific rules
+]
+
+# Rules to ignore
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+# Allow autofix for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore unused imports in __init__.py files
+"__init__.py" = ["F401"]
+
+# Ignore type annotations in test files
+"test_*.py" = ["ANN"]
+"tests/*.py" = ["ANN"]
+"conftest.py" = ["ANN"]
+
+# Django settings files can have undefined names
+"config/settings/*.py" = ["F405", "F403"]
+
+[tool.ruff.lint.isort]
+# Django-specific import ordering
+known-first-party = ["apps", "config"]
+section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+"django" = ["django"]
+
+[tool.ruff.format]
+# Use Black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

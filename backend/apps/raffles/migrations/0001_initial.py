@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("-created_at",),
-                "constraints": [
+                "constraints": (
                     models.CheckConstraint(
                         condition=models.Q(number_start__lt=models.F("number_end")),
                         name="raffle_number_range_valid",
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                         condition=models.Q(sale_end_at__lt=models.F("draw_scheduled_at")),
                         name="raffle_draw_after_sale",
                     ),
-                ],
+                ),
             },
         )
     ]

@@ -58,6 +58,24 @@ class Raffle(models.Model):
 
     objects = RaffleQuerySet.as_manager()
 
+    class Meta:
+        app_label = "raffles"
+        ordering = ("-created_at",)
+        constraints = (
+            models.CheckConstraint(
+                condition=models.Q(number_start__lt=models.F("number_end")),
+                name="raffle_number_range_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(sale_start_at__lt=models.F("sale_end_at")),
+                name="raffle_sale_window_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(sale_end_at__lt=models.F("draw_scheduled_at")),
+                name="raffle_draw_after_sale",
+            ),
+        )
+
     def __str__(self) -> str:
         return self.name
 
@@ -65,17 +83,26 @@ class Raffle(models.Model):
         super().clean()
         errors = {}
 
-        if self.number_start is not None and self.number_end is not None:
-            if self.number_start >= self.number_end:
-                errors["number_end"] = "End number must be greater than start number."
+        if (
+            self.number_start is not None
+            and self.number_end is not None
+            and self.number_start >= self.number_end
+        ):
+            errors["number_end"] = "End number must be greater than start number."
 
-        if self.sale_start_at and self.sale_end_at:
-            if self.sale_end_at <= self.sale_start_at:
-                errors["sale_end_at"] = "Sale end date must be after sale start date."
+        if (
+            self.sale_start_at
+            and self.sale_end_at
+            and self.sale_end_at <= self.sale_start_at
+        ):
+            errors["sale_end_at"] = "Sale end date must be after sale start date."
 
-        if self.sale_end_at and self.draw_scheduled_at:
-            if self.draw_scheduled_at <= self.sale_end_at:
-                errors["draw_scheduled_at"] = "Draw date must be after sale end date."
+        if (
+            self.sale_end_at
+            and self.draw_scheduled_at
+            and self.draw_scheduled_at <= self.sale_end_at
+        ):
+            errors["draw_scheduled_at"] = "Draw date must be after sale end date."
 
         if self.winner_number is not None:
             range_known = self.number_start is not None and self.number_end is not None
@@ -103,21 +130,3 @@ class Raffle(models.Model):
     @property
     def has_winner(self):
         return self.winner_number is not None
-
-    class Meta:
-        app_label = "raffles"
-        ordering = ("-created_at",)
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(number_start__lt=models.F("number_end")),
-                name="raffle_number_range_valid",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(sale_start_at__lt=models.F("sale_end_at")),
-                name="raffle_sale_window_valid",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(sale_end_at__lt=models.F("draw_scheduled_at")),
-                name="raffle_draw_after_sale",
-            ),
-        ]
