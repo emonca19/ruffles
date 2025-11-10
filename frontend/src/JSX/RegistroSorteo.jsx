@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './RegistroSorteo.css';
-import './GaleriaSorteos.css';
+import '../CSS/RegistroSorteo.css';
+import '../CSS/GaleriaSorteos.css';
 
 export default function RegistroSorteo() {
 

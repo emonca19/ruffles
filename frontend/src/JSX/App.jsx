@@ -12,6 +12,7 @@ function App() {
 
       <main className='app-content'>
         <Routes>
+          <Route path="/" element={<Inicio />} />
           <Route path="/Inicio" element={<Inicio />} />
           <Route path="/rifas" element={<GaleriaSorteos />} />
           <Route path="/registro" element={<RegistroSorteo />} />

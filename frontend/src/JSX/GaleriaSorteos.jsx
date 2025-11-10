@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import TarjetaSorteo from './TarjetaSorteo';
-import './GaleriaSorteos.css';
+import TarjetaSorteo from './TarjetaSorteo.jsx';
+import '../CSS/GaleriaSorteos.css';
 
 export default function GaleriaSorteos() {
   const [sorteos, setSorteos] = useState([]);

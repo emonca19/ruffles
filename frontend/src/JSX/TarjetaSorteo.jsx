@@ -1,5 +1,5 @@
 import React from 'react';
-import './GaleriaSorteos.css'; 
+import '../CSS/GaleriaSorteos.css'; 
 
 export default function TarjetaSorteo({ sorteo, esOrganizador }) {
   const formatoPrecio = new Intl.NumberFormat('es-MX', {
