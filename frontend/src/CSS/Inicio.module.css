@@ -1,14 +1,3 @@
-:root {
-  --color-fondo: #f4f7f9;
-  --color-tarjeta: #ffffff;
-  --color-texto: #333333;
-  --color-titulo-acento: #4f46e5;
-  --color-detalle-fondo: #eef2ff;
-  --color-boton: #4f46e5;
-  --color-boton-hover: #4338ca;
-  --sombra-suave: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
 .inicio-container {
   padding-top: 80px;
   background-color: var(--color-fondo);

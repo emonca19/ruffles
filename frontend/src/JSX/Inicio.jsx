@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../CSS/Inicio.css';
+import styles from '../CSS/Inicio.module.css';
 
 export default function Inicio() {
   return (
-    <div className="inicio-container">
-      <section className="hero-section">
-        <div className="hero-content">
+    <div className={styles['inicio-container']}>
+      <section className={styles['hero-section']}>
+        <div className={styles['hero-content']}>
           <h1>Apoya a Nuestra Comunidad</h1>
           <p>
             Somos una asociación civil dedicada a realizar actividades mensuales
@@ -14,7 +14,7 @@ export default function Inicio() {
             iniciativas es la organización de sorteos de artículos y servicios,
             donde tú puedes participar y ayudarnos a seguir creciendo.
           </p>
-          <Link to="/rifas" className="hero-button">
+          <Link to="/rifas" className={styles['hero-button']}>
             Ver Sorteos Activos
           </Link>
         </div>

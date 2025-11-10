@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import '../CSS/Login.css';
+import styles from '../CSS/LoginAdmin.module.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   
   // Estado para el correo y la contraseña
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // Para manejar errores de login
+  const [error, setError] = useState(''); 
+
+  const navigate = useNavigate();
 
   // Manejador para el envío del formulario
   const handleSubmit = async (event) => {
@@ -40,6 +43,8 @@ export default function Login() {
       alert('¡Inicio de sesión exitoso! (Revisa la consola)');
       // Aquí iría la redirección: navigate('/inicio');
 
+      navigate('/inicio');
+
     } catch (err) {
       console.error(err);
       setError('Correo o contraseña incorrectos. Intenta de nuevo.');
@@ -47,15 +52,15 @@ export default function Login() {
   };
 
   return (
-    <div className="login-page-container">
-      <div className="login-form-card">
+    <div className={styles['login-page-container']}>
+      <div className={styles['login-form-card']}>
         <h2>Acceso de Administrador</h2>
         <p>Inicia sesión para gestionar los sorteos.</p>
         
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className={styles['login-form']}>
           
           {/* Campo: Correo Electrónico */}
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="email">Correo Electrónico:</label>
             <input 
               type="email" 
@@ -69,7 +74,7 @@ export default function Login() {
           </div>
 
           {/* Campo: Contraseña */}
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="password">Contraseña:</label>
             <input 
               type="password" 
@@ -84,14 +89,14 @@ export default function Login() {
 
           {/* Mensaje de Error */}
           {error && (
-            <div className="login-error-message">
+            <div className={styles['login-error-message']}>
               {error}
             </div>
           )}
 
           {/* Botón de Envío */}
-          <div className="form-group">
-            <button type="submit" className="login-submit-button">
+          <div className={styles['form-group']}>
+            <button type="submit" className={styles['login-submit-button']}>
               Iniciar Sesión
             </button>
           </div>

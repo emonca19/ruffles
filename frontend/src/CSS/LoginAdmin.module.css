@@ -1,19 +1,12 @@
-/*
- * Estilos para el formulario de Login
- * Usa las variables de :root de GaleriaSorteos.css
- */
-
-/* Centra la tarjeta de login en la pantalla */
 .login-page-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80vh; /* Ocupa casi toda la altura */
+  min-height: 80vh;
   padding: 40px 20px;
   background-color: var(--color-fondo);
 }
 
-/* La tarjeta blanca del formulario */
 .login-form-card {
   background-color: var(--color-tarjeta);
   border-radius: 16px;
@@ -41,24 +34,23 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  text-align: left; /* Alinea las etiquetas a la izquierda */
+  text-align: left;
 }
 
-/* Importamos los estilos de formulario que ya teníamos */
-.form-group {
+.login-form .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.login-form .form-group label {
   font-weight: 600;
   color: var(--color-texto);
   font-size: 1rem;
 }
 
-.form-group input[type="email"],
-.form-group input[type="password"] {
+.login-form .form-group input[type="email"],
+.login-form .form-group input[type="password"] {
   padding: 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -68,19 +60,18 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group input:focus {
+.login-form .form-group input:focus {
   outline: none;
   border-color: var(--color-titulo-acento); /* Color índigo */
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); 
 }
 
-/* Botón de Iniciar Sesión (usando el color de acento) */
 .login-submit-button {
   padding: 16px;
   font-size: 1.1rem;
   font-weight: 600;
   color: #fff;
-  background-color: var(--color-titulo-acento); /* Color índigo */
+  background-color: var(--color-titulo-acento);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -89,13 +80,12 @@
 }
 
 .login-submit-button:hover {
-  background-color: #4338ca; /* Índigo más oscuro */
+  background-color: #4338ca; 
   transform: translateY(-2px);
 }
 
-/* Mensaje de error */
 .login-error-message {
-  color: #dc2626; /* Rojo de error */
+  color: #dc2626;
   background-color: #fee2e2;
   border: 1px solid #fca5a5;
   border-radius: 8px;

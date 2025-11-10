@@ -9,7 +9,7 @@ export default function Navbar() {
         <Link to="/">Rifas Iglesia</Link>
       </div>
       <ul className="navbar-links">
-        <li><Link to="/Inicio">Inicio</Link></li>
+        <li><Link to="/inicio">Inicio</Link></li>
         <li><Link to="/rifas">Rifas</Link></li>
         <li><Link to="/registro">Registrar</Link></li>
         <li><Link to="/contacto">Contacto</Link></li>

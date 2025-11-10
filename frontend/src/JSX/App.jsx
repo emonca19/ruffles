@@ -1,24 +1,27 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './Navbar.jsx';
 import GaleriaSorteos from './GaleriaSorteos.jsx';
 import RegistroSorteo from './RegistroSorteo.jsx';
 import Inicio from './Inicio.jsx';
+import Login from './LoginAdmin.jsx';
+import PublicLayout from './PublicLayout.jsx';
+import '../CSS/Global.css';
+
 
 function App() {
   return (
     <div className='App'>
-      <Navbar />
+      <Routes>
+        <Route element={<PublicLayout />}>
+        <Route path="/" element={<Inicio />} />
+        <Route path="/inicio" element={<Inicio />} />
+        <Route path="/rifas" element={<GaleriaSorteos />} />
+        <Route path="/registro" element={<RegistroSorteo />} />
+        <Route path="/contacto" element={<GaleriaSorteos />} />
+        </Route>
 
-      <main className='app-content'>
-        <Routes>
-          <Route path="/" element={<Inicio />} />
-          <Route path="/Inicio" element={<Inicio />} />
-          <Route path="/rifas" element={<GaleriaSorteos />} />
-          <Route path="/registro" element={<RegistroSorteo />} />
-          <Route path="/contacto" element={<GaleriaSorteos />} />
-        </Routes>
-      </main>
+        <Route path="/login" element={<Login />} />
+      </Routes>
     </div>
   );
 }
