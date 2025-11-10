@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import styles from '../CSS/LoginAdmin.module.css';
 import { useNavigate } from 'react-router-dom';
 
+// Token endpoint URL (Corrected to match Django project's path)
+const TOKEN_API_URL = 'http://localhost:8000/api/v1/auth/token/';
+
+
 export default function Login() {
   
   // Estado para el correo y la contraseña
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(''); 
+  const [isLoading, setIsLoading] = useState(false); // State for loading status
 
   const navigate = useNavigate();
 
@@ -15,39 +20,67 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(''); // Limpia errores previos
-
-    // --- AQUÍ VA TU LÓGICA DE BACKEND ---
-    // 1. Envía 'email' y 'password' a tu API de Django (ej: /api/token/ o /api/login/)
-    // 2. Si el login es exitoso, el backend te devolverá un token JWT.
-    // 3. Debes guardar ese token (ej. en localStorage) y redirigir al admin
-    //    a la página de "Registrar Sorteo" (usando useNavigate de react-router-dom).
+    setIsLoading(true); // Activa el estado de carga
 
     try {
-      // --- Simulación de llamada a API ---
-      console.log('Intentando iniciar sesión con:', { email, password });
-      // const response = await fetch('http://localhost:8000/api/token/', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password })
-      // });
+      // 1. Send 'email' and 'password' to the Django API to get the token
+      const response = await fetch(TOKEN_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Line sends the 'email' and 'password' fields
+        body: JSON.stringify({ email: email, password: password }) 
+      });
       
-      // if (!response.ok) {
-      //   throw new Error('Correo o contraseña incorrectos');
-      // }
+      if (!response.ok) {
+        // --- ROBUST ERROR HANDLING ---
+        
+        let errorMessage = 'Unknown authentication error.';
+        
+        // 1. READ BODY ONCE as text (to prevent stream read error)
+        const rawResponseText = await response.text();
+        
+        try {
+            // 2. Try to parse the text to JSON
+            const errorData = JSON.parse(rawResponseText);
+            
+            // Try to extract a useful error message from the JSON structure
+            const detailError = errorData.detail || errorData.non_field_errors?.[0];
+            errorMessage = detailError || 'Invalid credentials.';
+        } catch (e) {
+            // 3. If parsing fails, it means we received HTML (<!DOCTYPE) or plain text.
+            console.error('Non-JSON error response received (raw text):', rawResponseText.substring(0, 100) + '...');
+            
+            if (response.status === 404) {
+                 errorMessage = 'Login endpoint not found (Check URL: /api/v1/auth/token/).';
+            } else if (response.status >= 500) {
+                 errorMessage = 'Internal server error (Check your Django backend).';
+            } else {
+                 // 400, 401, 403, etc.
+                 errorMessage = `Error ${response.status}: Invalid credentials or unexpected response.`;
+            }
+        }
+        
+        throw new Error(errorMessage);
+      }
+      // --- END ERROR HANDLING ---
 
-      // const data = await response.json();
-      // console.log('Token recibido:', data.access);
-      // localStorage.setItem('authToken', data.access);
+
+      // 2. If login is successful, parse the JSON
+      const data = await response.json();
+      console.log('Token received (Access):', data.access);
       
-      // --- Fin de simulación ---
-      alert('¡Inicio de sesión exitoso! (Revisa la consola)');
-      // Aquí iría la redirección: navigate('/inicio');
-
-      navigate('/inicio');
+      // 3. Save the access token
+      localStorage.setItem('authToken', data.access);
+      
+      // 4. Redirect the administrator to the raffle registration page
+      alert('¡Inicio de sesión exitoso!'); 
+      navigate('/rifas'); 
 
     } catch (err) {
-      console.error(err);
-      setError('Correo o contraseña incorrectos. Intenta de nuevo.');
+      console.error('Final authentication error:', err.message);
+      setError(err.message || 'Error desconocido al intentar iniciar sesión.');
+    } finally {
+      setIsLoading(false); // Deactivates loading status
     }
   };
 
@@ -70,6 +103,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@iglesia.com"
               required 
+              disabled={isLoading}
             />
           </div>
 
@@ -84,6 +118,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required 
+              disabled={isLoading}
             />
           </div>
 
@@ -96,8 +131,12 @@ export default function Login() {
 
           {/* Botón de Envío */}
           <div className={styles['form-group']}>
-            <button type="submit" className={styles['login-submit-button']}>
-              Iniciar Sesión
+            <button 
+              type="submit" 
+              className={styles['login-submit-button']}
+              disabled={isLoading} 
+            >
+              {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
             </button>
           </div>
         </form>
