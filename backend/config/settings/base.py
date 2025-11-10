@@ -20,6 +20,13 @@ SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-produc
 DEBUG = env("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "django"])
 
+# Default organizer bootstrap user
+DEFAULT_ORGANIZER_EMAIL = env(
+    "DEFAULT_ORGANIZER_EMAIL", default="organizer@example.com"
+)
+DEFAULT_ORGANIZER_PASSWORD = env("DEFAULT_ORGANIZER_PASSWORD", default="ChangeMe123!")
+DEFAULT_ORGANIZER_NAME = env("DEFAULT_ORGANIZER_NAME", default="Lead Organizer")
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
