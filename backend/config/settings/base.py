@@ -13,7 +13,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Environment variables
 env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(BASE_DIR / ".env")
+
+ENV_PATHS = ((BASE_DIR.parent / ".env"), (BASE_DIR / ".env"))
+for env_path in ENV_PATHS:
+    if env_path.exists():
+        environ.Env.read_env(env_path)
+        break
 
 # SECURITY
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")

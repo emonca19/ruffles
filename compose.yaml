@@ -2,12 +2,14 @@ services:
   postgres:
     image: postgres:17
     container_name: ruffles_postgres
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_DB: ruffles_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-ruffles_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -33,13 +35,19 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
+    env_file:
+      - ./.env
     environment:
-      - DEBUG=True
-      - DB_HOST=postgres
-      - DB_NAME=ruffles_db
-      - REDIS_URL=redis://redis:6379/0
-      - DJANGO_SETTINGS_MODULE=config.settings.local
-      - PYTHONPATH=/app:/app/apps
+      DEBUG: ${DEBUG:-True}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-ruffles_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      PYTHONPATH: /app:/app/apps
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,11 +61,17 @@ services:
   #   build: ./backend
   #   container_name: ruffles_celery
   #   command: celery -A config worker -l info
+  #   env_file:
+  #     - ./.env
   #   environment:
-  #     - DEBUG=True
-  #     - DB_HOST=postgres
-  #     - DB_NAME=ruffles_db
-  #     - REDIS_URL=redis://redis:6379/0
+  #     DEBUG: ${DEBUG:-True}
+  #     ENVIRONMENT: ${ENVIRONMENT:-development}
+  #     DB_HOST: postgres
+  #     DB_NAME: ${DB_NAME:-ruffles_db}
+  #     DB_USER: ${DB_USER:-postgres}
+  #     DB_PASSWORD: ${DB_PASSWORD:-postgres}
+  #     DB_PORT: 5432
+  #     REDIS_URL: redis://redis:6379/0
   #   depends_on:
   #     - postgres
   #     - redis

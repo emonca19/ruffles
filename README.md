@@ -25,11 +25,12 @@ A web application for managing raffles and ticket sales for non-profit associati
 ```
 cd ruffles
 
-# Copy environment templates
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+# Copy environment template
+cp .env.example .env
 
 # Update values as needed (defaults work for local development)
+# NOTE: The backend auto-creates an organizer account using
+# DEFAULT_ORGANIZER_* variables after migrations run.
 ```
 
 ### 2. Start Backend & Database (Docker)
@@ -46,6 +47,9 @@ docker compose up -d
 
 ```
 docker compose exec django python manage.py migrate
+
+# The post-migrate hook seeds the default organizer with the
+# credentials defined in .env (DEFAULT_ORGANIZER_*).
 ```
 
 ### 4. Create Superuser (Optional)
@@ -72,8 +76,7 @@ pnpm run dev
 ### 1. Setup Environment
 
 ```
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp .env.example .env
 ```
 
 ### 2. Backend
@@ -120,6 +123,20 @@ Once backend is running, access:
 - **Swagger/OpenAPI**: http://localhost:8000/api/schema/swagger/
 - **ReDoc**: http://localhost:8000/api/schema/redoc/
 - **Admin Panel**: http://localhost:8000/admin/
+
+### Authentication Endpoints
+
+All auth responses use JWT (SimpleJWT). Available routes:
+
+- `POST /api/v1/auth/register/` — Public signup for customers. Organizer
+  signups require an authenticated organizer token.
+- `POST /api/v1/auth/token/` — Obtain access/refresh tokens (login).
+- `POST /api/v1/auth/token/refresh/` — Refresh an access token.
+- `GET /api/v1/auth/me/` — Return the current authenticated user profile.
+
+On the first migration run, the system provisions the organizer specified by
+`DEFAULT_ORGANIZER_EMAIL/DEFAULT_ORGANIZER_PASSWORD`. Use that account to
+create additional organizers via the register endpoint.
 
 ## Development Workflow
 
