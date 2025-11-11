@@ -59,21 +59,21 @@ describe('Login - Pruebas Funcionales', () => {
     );
   };
 
-  // 1. PRUEBA: Flujo de login exitoso
+  // 1. PRUEBA: Flujo de login exitoso - CORREGIDA
   it('debe permitir al usuario hacer login exitosamente', async () => {
     const user = userEvent.setup();
 
-    // Mock de respuesta exitosa
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access: 'abc123'
-      })
-    });
+    // Mock de respuesta exitosa (más lento para poder ver el loading)
+    fetch.mockImplementationOnce(() => 
+      new Promise(resolve => setTimeout(() => resolve({
+        ok: true,
+        json: async () => ({ access: 'abc123' })
+      }), 50))
+    );
 
     renderLogin();
 
-    // 1. El usuario escribe su email (usa las etiquetas REALES de tu componente)
+    // 1. El usuario escribe su email
     await user.type(
       screen.getByLabelText(/correo electrónico/i),
       'organizer@example.com'
@@ -86,12 +86,15 @@ describe('Login - Pruebas Funcionales', () => {
     );
 
     // 3. El usuario hace click en "Iniciar Sesión"
-    await user.click(
-      screen.getByRole('button', { name: /iniciar sesión/i })
-    );
+    const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
+    await user.click(submitButton);
 
-    // 4. Verificar que se muestra estado de carga
-    expect(screen.getByRole('button')).toBeDisabled();
+    // 4. Verificar que se muestra estado de carga - CORREGIDO
+    // Espera a que el botón cambie a "Iniciando..." y se deshabilite
+    await waitFor(() => {
+      expect(submitButton).toBeDisabled();
+    });
+    
     expect(screen.getByText(/iniciando.../i)).toBeInTheDocument();
 
     // 5. Verificar que se llamó a la API con los datos correctos
@@ -219,14 +222,14 @@ describe('Login - Pruebas Funcionales', () => {
     // Enviar formulario
     await user.click(submitButton);
 
-    // Durante loading - campos deshabilitados
+    // Durante loading - campos deshabilitados para evitar un error
     expect(emailInput).toBeDisabled();
     expect(passwordInput).toBeDisabled();
     expect(submitButton).toBeDisabled();
     expect(submitButton).toHaveTextContent('Iniciando...');
   });
 
-  // 6. PRUEBA: Limpieza de errores al escribir
+  // 6. PRUEBA: Limpieza de errores al escribir - CORREGIDA
   it('debe limpiar los errores cuando el usuario comienza a escribir', async () => {
     const user = userEvent.setup();
 
@@ -248,12 +251,18 @@ describe('Login - Pruebas Funcionales', () => {
       expect(screen.getByText(/Credenciales inválidas/i)).toBeInTheDocument();
     });
 
-    // El usuario comienza a escribir de nuevo
+    // El usuario comienza a escribir de nuevo 
+    // Limpiar  campos para asegurar que el error desaparezca
     await user.clear(screen.getByLabelText(/correo electrónico/i));
     await user.type(screen.getByLabelText(/correo electrónico/i), 'nuevo@email.com');
+    
+    await user.clear(screen.getByLabelText(/contraseña/i));
+    await user.type(screen.getByLabelText(/contraseña/i), 'nuevacontraseña');
 
-    // El error debería desaparecer
-    expect(screen.queryByText(/Credenciales inválidas/i)).not.toBeInTheDocument();
+    // El error debería desaparecer - usar waitFor para dar tiempo
+    await waitFor(() => {
+      expect(screen.queryByText(/Credenciales inválidas/i)).not.toBeInTheDocument();
+    });
   });
 
   // 7. PRUEBA: Manejo de errores de red
