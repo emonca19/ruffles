@@ -8,13 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.js',
-    // Para cobertura no esencial
-    coverage: {
-      reporter: ['text', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/setupTests.js'  
-      ]
-    }
+  
+    
   }
 })

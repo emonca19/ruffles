@@ -8,10 +8,15 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:unit": "vitest run src/utils/ src/components/Input/",
-    "test:functional": "vitest run src/components/LoginForm",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:unit": "vitest run src/service/ src/utils/",
+    "test:functional": "vitest run src",
+    "test:login": "vitest run src/service/autentication.test.jsx",
     "test:all": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "react": "^19.1.1",
