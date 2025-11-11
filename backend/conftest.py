@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 
 from django.contrib.auth import get_user_model
@@ -39,15 +40,29 @@ def user_factory(db):
         is_superuser = kwargs.get("is_superuser", False)
         is_active = kwargs.get("is_active", True)
         is_blocked = kwargs.get("is_blocked", False)
+        user_type = kwargs.get("user_type")
 
-        user = User.objects.create_user(username=email, email=email, password=password)
+        # Create using the custom User model's API
+        create_kwargs = {
+            "email": email,
+            "password": password,
+            "name": name,
+            "is_staff": is_staff,
+            "is_superuser": is_superuser,
+            "is_active": is_active,
+        }
+        if user_type is not None:
+            create_kwargs["user_type"] = user_type
+
+        user = User.objects.create_user(**create_kwargs)
+
         try:
-            user.first_name = name
-            user.is_staff = is_staff
-            user.is_superuser = is_superuser
-            user.is_active = is_active
+            # Ensure name is set even if manager ignored it
+            if getattr(user, "name", None) != name:
+                user.name = name
             user.save()
-            # Store blocked flag in cache so LoginView can pick it up even if
+
+            # Store blocked flag in cache so views/services can pick it up even if
             # the concrete user model doesn't have an is_blocked field.
             if is_blocked:
                 try:
@@ -57,10 +72,8 @@ def user_factory(db):
                 except Exception:
                     # If cache isn't available in this environment, set an
                     # attribute on the instance as a shallow fallback.
-                    try:
+                    with contextlib.suppress(Exception):
                         user.is_blocked = True
-                    except Exception:
-                        pass
         except Exception:
             pass
         return user
@@ -70,8 +83,10 @@ def user_factory(db):
 
 @pytest.fixture
 def organizer_user(db, user_factory):
+    import uuid
+    unique_email = f"organizer-{uuid.uuid4().hex[:8]}@example.com"
     return user_factory(
-        email="organizer@example.com", password="OrgPass123", name="Organizer"
+        email=unique_email, password="OrgPass123", name="Organizer"
     )
 
 
@@ -87,10 +102,8 @@ def api_client_with_token(db, user_factory):
         if user is None:
             user = user_factory()
         token = f"test-token-{user.id}"
-        try:
+        with contextlib.suppress(Exception):
             client.force_authenticate(user=user)
-        except Exception:
-            pass
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         return client
 

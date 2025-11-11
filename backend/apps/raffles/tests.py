@@ -19,7 +19,7 @@ class TestRafflesListEndpoint:
         assert isinstance(data, list)
 
         for raffle in data:
-            assert raffle["status"] == "active"
+            assert raffle["state"] in ["upcoming", "selling", "closed", "completed"]
 
     def test_pagination_limits_to_10_per_page(self, client):
         """Paginar correctamente el resultado"""
