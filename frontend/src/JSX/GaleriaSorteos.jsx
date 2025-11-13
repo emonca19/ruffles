@@ -69,9 +69,9 @@ export default function GaleriaSorteos() {
               <h2>No hay sorteos en el sistema</h2>
               <button
                 className="raffle-participar-btn"
-                onClick={() => (window.location.href = "/crear-sorteo")}
+                onClick={() => (window.location.href = "/registro")}
               >
-                Crear Nuevo Sorteo
+                Registrar Nuevo Sorteo
               </button>
             </>
           )}
