@@ -5,6 +5,7 @@ import RegistroSorteo from './RegistroSorteo.jsx';
 import Inicio from './Inicio.jsx';
 import Login from './LoginAdmin.jsx';
 import PublicLayout from './PublicLayout.jsx';
+import RegistroUsuario from './RegistroAdmin.jsx';
 import '../CSS/Global.css';
 
 
@@ -20,6 +21,7 @@ function App() {
         <Route path="/contacto" element={<GaleriaSorteos />} />
         </Route>
 
+        <Route path="/registroUsuario" element={<RegistroUsuario />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </div>
