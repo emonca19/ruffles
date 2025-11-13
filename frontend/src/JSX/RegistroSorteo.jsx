@@ -1,104 +1,168 @@
-import React, { useState } from 'react';
-import '../CSS/RegistroSorteo.css';
-import '../CSS/GaleriaSorteos.css';
+import React, { useState } from "react";
+import "../CSS/RegistroSorteo.css";
 
 export default function RegistroSorteo() {
-
   const [formData, setFormData] = useState({
-    title: '',
-    imageUrl: '',
-    ticketCount: '',
-    endDate: ''
+    name: "",
+    description: "",
+    image_url: "",
+    number_start: 1,
+    number_end: 100,
+    price_per_number: "",
+    sale_start_at: "",
+    sale_end_at: "",
+    draw_scheduled_at: "",
   });
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // Aquí es donde se enviarian los datos a la API
-    console.log('Datos del formulario para enviar:', formData);
+    try {
+      const token = localStorage.getItem("authToken");
 
-    setFormData({
-      title: '',
-      imageUrl: '',
-      ticketCount: '',
-      endDate: ''
-    });
+      const response = await fetch("http://localhost:8000/api/v1/raffles/organizer/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          image_url: formData.image_url,
+          number_start: parseInt(formData.number_start, 10),
+          number_end: parseInt(formData.number_end, 10),
+          price_per_number: parseFloat(formData.price_per_number),
+          sale_start_at: new Date(formData.sale_start_at).toISOString(),
+          sale_end_at: new Date(formData.sale_end_at).toISOString(),
+          draw_scheduled_at: new Date(formData.draw_scheduled_at).toISOString(),
+        }),
+      });
 
-    alert('¡Sorteo registrado exitosamente! (Revisa la consola)');
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error al crear sorteo:", response.status, text);
+        alert(`Error al crear sorteo (${response.status})`);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Sorteo creado:", data);
+      alert("Sorteo creado exitosamente");
+
+      setFormData({
+        name: "",
+        description: "",
+        image_url: "",
+        number_start: 1,
+        number_end: 100,
+        price_per_number: "",
+        sale_start_at: "",
+        sale_end_at: "",
+        draw_scheduled_at: "",
+      });
+    } catch (error) {
+      console.error("Error de red o de servidor:", error);
+      alert("Ocurrió un error al intentar registrar el sorteo");
+    }
   };
-
-  const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="registro-container">
-      <header className="galeria-header">
-        <h1>Registrar Nuevo Sorteo</h1>
-        <p>Completa los campos para crear una nueva rifa.</p>
-      </header>
-      <form className="registro-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="title">Título del Premio:</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Ej: iPhone 15 Pro"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="imageUrl">URL de la Imagen del Premio:</label>
-          <input
-            type="url"
-            id="imageUrl"
-            name="imageUrl"
-            value={formData.imageUrl}
-            onChange={handleChange}
-            placeholder="https://ejemplo.com/imagen.jpg"
-            required
-          />
-          <small>Pega un enlace a una imagen que ya esté en internet.</small>
-        </div>
-        <div className="form-group">
-          <label htmlFor="ticketCount">Cantidad de Números Disponibles:</label>
-          <input
-            type="number"
-            id="ticketCount"
-            name="ticketCount"
-            value={formData.ticketCount}
-            onChange={handleChange}
-            placeholder="Ej: 100"
-            min="1"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="endDate">Fecha de Terminación:</label>
-          <input
-            type="date"
-            id="endDate"
-            name="endDate"
-            value={formData.endDate}
-            onChange={handleChange}
-            min={today}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <button type="submit" className="submit-button">
-            Crear Sorteo
-          </button>
-        </div>
+    <div className="registro-sorteo-container">
+      <h2>Registrar Nuevo Sorteo</h2>
+      <form onSubmit={handleSubmit} className="registro-sorteo-form">
+        <label>Nombre del sorteo</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Ej. Rifa de una bicicleta"
+          required
+        />
+
+        <label>Descripción</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Describe tu sorteo"
+          required
+        ></textarea>
+
+        <label>URL de la imagen</label>
+        <input
+          type="text"
+          name="image_url"
+          value={formData.image_url}
+          onChange={handleChange}
+          placeholder="Ej. https://..."
+          required
+        />
+
+        <label>Número inicial</label>
+        <input
+          type="number"
+          name="number_start"
+          min="1"
+          value={formData.number_start}
+          onChange={handleChange}
+          required
+        />
+
+        <label>Número final</label>
+        <input
+          type="number"
+          name="number_end"
+          min="1"
+          value={formData.number_end}
+          onChange={handleChange}
+          required
+        />
+
+        <label>Precio por número</label>
+        <input
+          type="number"
+          name="price_per_number"
+          step="0.01"
+          value={formData.price_per_number}
+          onChange={handleChange}
+          placeholder="Ej. 50.00"
+          required
+        />
+
+        <label>Inicio de venta</label>
+        <input
+          type="datetime-local"
+          name="sale_start_at"
+          value={formData.sale_start_at}
+          onChange={handleChange}
+          required
+        />
+
+        <label>Fin de venta</label>
+        <input
+          type="datetime-local"
+          name="sale_end_at"
+          value={formData.sale_end_at}
+          onChange={handleChange}
+          required
+        />
+
+        <label>Fecha del sorteo</label>
+        <input
+          type="datetime-local"
+          name="draw_scheduled_at"
+          value={formData.draw_scheduled_at}
+          onChange={handleChange}
+          required
+        />
+
+        <button type="submit" className="registro-btn">Registrar Sorteo</button>
       </form>
     </div>
   );
