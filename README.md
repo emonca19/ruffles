@@ -41,6 +41,7 @@ docker compose up -d
 # Backend: http://localhost:8000
 # PostgreSQL: localhost:5432
 # Redis: localhost:6379
+# Uploaded raffle media is stored in ./media (mounted into the Django container).
 ```
 
 ### 3. Run Migrations
@@ -137,6 +138,12 @@ All auth responses use JWT (SimpleJWT). Available routes:
 On the first migration run, the system provisions the organizer specified by
 `DEFAULT_ORGANIZER_EMAIL/DEFAULT_ORGANIZER_PASSWORD`. Use that account to
 create additional organizers via the register endpoint.
+
+### Raffle Endpoints
+
+- `POST /api/v1/raffles/organizer/` now expects `multipart/form-data`. Send the
+  raffle image in the `image` field along with other form values. Responses
+  include `image` pointing to the uploaded file served under `MEDIA_URL`.
 
 ## Development Workflow
 

@@ -2,6 +2,8 @@
 URL configuration for Ruffles project.
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -31,4 +33,5 @@ urlpatterns = [
     path("api/v1/raffles/", include("apps.raffles.urls")),
     path("api/v1/purchases/", include("apps.purchases.urls")),
     path("api/v1/payments/", include("apps.payments.urls")),
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

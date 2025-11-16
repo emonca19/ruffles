@@ -19,7 +19,7 @@ class RaffleBaseSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
-            "image_url",
+            "image",
             "number_start",
             "number_end",
             "price_per_number",
@@ -87,7 +87,7 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
 		fields: ClassVar[list[str]] = [
 			"name",
 			"description",
-			"image_url",
+			"image",
 			"number_start",
 			"number_end",
 			"price_per_number",
@@ -95,6 +95,9 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
 			"sale_end_at",
 			"draw_scheduled_at",
 		]
+		extra_kwargs: ClassVar[dict[str, dict[str, object]]] = {
+			"image": {"required": False, "allow_null": True},
+		}
 
 	def create(self, validated_data: dict[str, object]) -> Raffle:
 		user = self.context["request"].user

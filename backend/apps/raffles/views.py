@@ -4,9 +4,13 @@ from typing import cast
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
+from rest_framework.response import Response
+
+from drf_spectacular.utils import extend_schema
 
 from .models import Raffle
 from .serializers import (
@@ -93,11 +97,16 @@ class RaffleListView(generics.ListAPIView):
         return queryset
 
 
+@extend_schema(
+    request=OrganizerRaffleWriteSerializer,
+    responses=OrganizerRaffleSerializer,
+)
 class OrganizerRaffleListView(generics.ListCreateAPIView):
     request: Request
     serializer_class = OrganizerRaffleSerializer
     pagination_class = RafflePagination
     permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_queryset(self) -> QuerySet[Raffle]:
         request = cast(Request, self.request)
@@ -120,10 +129,18 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
 
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore[override]
         if self.request.method == "POST":
             return OrganizerRaffleWriteSerializer
         return super().get_serializer_class()
 
     def perform_create(self, serializer: OrganizerRaffleWriteSerializer) -> None:
         serializer.save()
+
+    def create(self, request: Request, *args: object, **kwargs: object) -> Response:
+        write_serializer = self.get_serializer(data=request.data)
+        write_serializer.is_valid(raise_exception=True)
+        raffle = write_serializer.save()
+        read_serializer = OrganizerRaffleSerializer(raffle, context=self.get_serializer_context())
+        headers = self.get_success_headers(read_serializer.data)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)

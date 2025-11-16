@@ -55,6 +55,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - ./media:/app/media
       
   # Uncomment when Celery is configured
   # celery:

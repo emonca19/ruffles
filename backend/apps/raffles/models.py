@@ -37,7 +37,7 @@ class RaffleManager(models.Manager["Raffle"]):
 class Raffle(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
-    image_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to="raffles/", blank=True)
 
     number_start = models.PositiveIntegerField()
     number_end = models.PositiveIntegerField()
