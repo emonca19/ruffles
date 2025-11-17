@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Raffle
+from .services import RaffleAvailability, RaffleNumberStatus
 
 
 class RaffleBaseSerializer(serializers.ModelSerializer):
@@ -110,3 +111,19 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
 		raffle.full_clean()
 		raffle.save()
 		return raffle
+
+
+class RaffleNumberStatusSerializer(serializers.Serializer[RaffleNumberStatus]):
+	number = serializers.IntegerField()
+	status = serializers.CharField()
+	purchase_id = serializers.IntegerField(required=False, allow_null=True)
+	customer_name = serializers.CharField(required=False, allow_null=True)
+
+
+class RaffleAvailabilitySerializer(serializers.Serializer[RaffleAvailability]):
+	raffle_id = serializers.IntegerField()
+	range_start = serializers.IntegerField()
+	range_end = serializers.IntegerField()
+	total_numbers = serializers.IntegerField()
+	summary = serializers.DictField(child=serializers.IntegerField())
+	numbers = RaffleNumberStatusSerializer(many=True)

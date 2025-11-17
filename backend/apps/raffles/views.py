@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import cast
 
 from django.db.models import QuerySet
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import generics, permissions, status
@@ -17,7 +18,9 @@ from .serializers import (
     OrganizerRaffleSerializer,
     OrganizerRaffleWriteSerializer,
     PublicRaffleSerializer,
+    RaffleAvailabilitySerializer,
 )
+from .services import get_raffle_availability
 
 
 def _parse_bool_param(value: str | None) -> bool | None:
@@ -95,6 +98,15 @@ class RaffleListView(generics.ListAPIView):
             )
 
         return queryset
+
+
+class RaffleAvailabilityView(generics.RetrieveAPIView):
+    serializer_class = RaffleAvailabilitySerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def get_object(self):
+        raffle = get_object_or_404(Raffle.objects.active(), pk=self.kwargs["pk"])
+        return get_raffle_availability(raffle)
 
 
 @extend_schema(
