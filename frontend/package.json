@@ -13,9 +13,16 @@
     "test:unit": "vitest run src/service/ src/utils/",
     "test:functional": "vitest run src",
     "test:login": "vitest run src/service/autentication.test.jsx",
-    "test:registro": "vitest run  ./service/RegisterForm.test.jsx",
-    "test:registro:watch": "vitest ./service/RegisterForm.test.jsx",
-    "test:registro:coverage": "vitest run ./service/RegisterForm.test.jsx --coverage",
+    
+    "test:registro": "vitest run  src/service/RegisterForm.test.jsx",
+    "test:registro:watch": "vitest src/service/RegisterForm.test.jsx",
+    "test:registro:coverage": "vitest run src/service/RegisterForm.test.jsx --coverage",
+    
+  
+    "test:sorteo": "vitest run src/service/crearSorteo.test.jsx",
+    "test:sorteo:watch": "vitest src/service/crearSorteo.test.jsx",
+    "test:sorteo:coverage": "vitest run src/service/crearSorteo.test.jsx --coverage",
+    
     "test:all": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

@@ -42,7 +42,7 @@ describe('PRUEBAS FORMULARIO REGISTRO - 5 Puntos Clave', () => {
     vi.clearAllMocks();
   });
 
-  // ==================== PUNTO 1: RENDERING DE FORMULARIO COMPLETO ====================
+  // rendering de todo el formulario de registro
   describe('1. Rendering de formulario completo', () => {
     test('debe renderizar todos los campos del formulario correctamente', () => {
       render(
@@ -88,7 +88,7 @@ describe('PRUEBAS FORMULARIO REGISTRO - 5 Puntos Clave', () => {
     });
   });
 
-  // ==================== PUNTO 2: ENVÍO EXITOSO DE DATOS VÁLIDOS ====================
+  // envio de datos validos
   describe('2. Envío exitoso de datos válidos', () => {
     test('debe mostrar mensaje de éxito cuando el registro es exitoso', async () => {
       // Mock de respuesta exitosa del servidor
@@ -153,7 +153,7 @@ describe('PRUEBAS FORMULARIO REGISTRO - 5 Puntos Clave', () => {
     });
   });
 
-  // ==================== PUNTO 3: VALIDACIONES EN CAMPO ====================
+  // validaciones de campo
   describe('3. Validaciones en campo', () => {
     test('debe validar que las contraseñas coincidan antes del envío', async () => {
       render(
@@ -230,7 +230,7 @@ describe('PRUEBAS FORMULARIO REGISTRO - 5 Puntos Clave', () => {
     });
   });
 
-  // ==================== PUNTO 4: MENSAJE DE ERROR SI EMAIL YA EXISTE ====================
+  // error si ya hay un email registrado
   describe('4. Mensaje de error si email ya existe', () => {
     test('debe mostrar mensaje específico cuando el email ya está registrado', async () => {
       // Mock de error de email existente
@@ -318,7 +318,7 @@ describe('PRUEBAS FORMULARIO REGISTRO - 5 Puntos Clave', () => {
     });
   });
 
-  // ==================== PUNTO 5: CAMPOS VACÍOS DISPARAN ERRORES VISUALES ====================
+  //campos vacios
   describe('5. Campos vacíos disparan errores visuales', () => {
     test('debe mostrar que los campos requeridos son obligatorios', () => {
       render(
