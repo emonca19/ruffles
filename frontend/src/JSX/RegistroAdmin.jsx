@@ -7,12 +7,10 @@ export default function RegistroUsuario() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido_paterno: '',
-    apellido_materno: '',
+    name: '',
     email: '',
     phone: '',
-    user_type: 'organizador',
+    user_type: 'organizer',
     password1: '',
     password2: '',
   });
@@ -34,19 +32,39 @@ export default function RegistroUsuario() {
       return;
     }
 
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      setError('No estás autenticado. Inicia sesión primero.');
+      navigate('/login');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/auth/register/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          user_type: formData.user_type,
+          password: formData.password1
+        }),
       });
 
-      if (!response.ok) {
+      /*if (!response.ok) {
         const data = await response.json();
         console.error(data);
         throw new Error(
           data.detail || 'Error al registrar el usuario. Revisa los datos.'
         );
+      }*/
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.log("❌ ERROR BACKEND:", data);
+        throw new Error(JSON.stringify(data));
       }
 
       setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
@@ -67,31 +85,10 @@ export default function RegistroUsuario() {
             <label>Nombre</label>
             <input
               type="text"
-              name="nombre"
-              value={formData.nombre}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Apellido paterno</label>
-            <input
-              type="text"
-              name="apellido_paterno"
-              value={formData.apellido_paterno}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Apellido materno (opcional)</label>
-            <input
-              type="text"
-              name="apellido_materno"
-              value={formData.apellido_materno}
-              onChange={handleChange}
             />
           </div>
 
