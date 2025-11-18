@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import '../CSS/Navbar.css';
 
 export default function Navbar() {
+  const esOrganizador = !!localStorage.getItem('authToken');
   return (
     <nav className="navbar-flotante">
       <div className="navbar-logo">
@@ -11,7 +12,9 @@ export default function Navbar() {
       <ul className="navbar-links">
         <li><Link to="/inicio">Inicio</Link></li>
         <li><Link to="/rifas">Rifas</Link></li>
-        <li><Link to="/registro">Registrar</Link></li>
+        {esOrganizador && (
+            <li><Link to="/registro">Registrar</Link></li>
+        )}
         <li><Link to="/contacto">Contacto</Link></li>
       </ul>
     </nav>

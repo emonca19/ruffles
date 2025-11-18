@@ -71,9 +71,10 @@ export default function Login() {
       
       // 3. Save the access token
       localStorage.setItem('authToken', data.access);
-      
+
       // 4. Redirect the administrator to the raffle registration page
       alert('¡Inicio de sesión exitoso!'); 
+      // *** ELIMINADA: localStorage.setItem('raffleView', 'organizador'); ***
       navigate('/rifas'); 
 
     } catch (err) {

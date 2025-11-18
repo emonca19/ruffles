@@ -229,3 +229,24 @@ body {
   background-color: #ffdb4d;
   transform: scale(1.05);
 }
+
+.raffle-logout-btn {
+    /* Apariencia */
+    background-color: #dc3545; /* Rojo de advertencia */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 15px;
+    cursor: pointer;
+    
+    /* Tipografía */
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-top: 10px; /* Separación del header */
+    transition: background-color 0.2s ease;
+}
+
+.raffle-logout-btn:hover {
+    background-color: #c82333; /* Rojo más oscuro al pasar el ratón */
+}
