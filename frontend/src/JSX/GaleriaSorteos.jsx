@@ -1,136 +1,184 @@
 import React, { useState, useEffect } from 'react';
 import TarjetaSorteo from './TarjetaSorteo.jsx';
 import '../CSS/GaleriaSorteos.css';
+import { useNavigate } from 'react-router-dom';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 export default function GaleriaSorteos() {
-  const [sorteos, setSorteos] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // *** DETERMINACIÓN DE VISTA AUTOMÁTICA ***
-  const esOrganizador = !!localStorage.getItem('authToken');
-  const vista = esOrganizador ? 'organizador' : 'visitante';
-  
-  // *** FUNCIÓN DE CERRAR SESIÓN ***
-  const handleLogout = () => {
-    localStorage.removeItem('authToken'); // 1. Elimina el token
-    // 2. Recarga para aplicar la nueva vista (visitante)
-    window.location.reload(); 
-  };
+        const [sorteos, setSorteos] = useState([]);
+        const [isLoading, setIsLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const navigate = useNavigate();
 
+        // *** DETERMINACIÓN DE VISTA AUTOMÁTICA ***
+        const token = localStorage.getItem('authToken');
+        const esOrganizador = !!token;
+        const vista = esOrganizador ? 'organizador' : 'visitante';
 
-  useEffect(() => {
-    setIsLoading(true);
+        // *** FUNCIÓN DE CERRAR SESIÓN ***
+        const handleLogout = () => {
+                localStorage.removeItem('authToken');
+                window.location.reload();
+        };
 
-    // Simula una carga (aquí iría tu fetch real)
-    setTimeout(() => {
-      if (vista === 'visitante') {
-        // Datos para Visitante
-        const datosSimulados = [
-          { id: 1, name: "iPhone 15 Pro", image_url: "https://m.media-amazon.com/images/I/81fO2C9cYjL._AC_SY300_SX300_QL70_ML2_.jpg", price_per_number: 100 },
-          { id: 2, name: "Canasta de Regalo", image_url: "https://mantelyservilleta.com/cdn/shop/files/RegaloCajaGourmetULTRAPremium-mantelyservilleta_1_1024x1024@2x.jpg?v=1699581917", price_per_number: 50 },
-          { id: 3, name: "Viaje a la Playa", image_url: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?ixlib=rb-4.1.0&auto=format&fit=crop&w=1074&q=80", price_per_number: 250 },
-          { id: 4, name: "Audífonos Pro", image_url: "https://via.placeholder.com/300x200?text=Audio", price_per_number: 75 },
-          { id: 5, name: "Cena para Dos", image_url: "https://via.placeholder.com/300x200?text=Cena", price_per_number: 40 },
-        ];
-        setSorteos(datosSimulados);
-      } else {
-        // *** DATOS MODIFICADOS PARA ORGANIZADOR (1 SORTEO DE PRUEBA) ***
-        const datosOrganizador = [
-            { 
-            id: 101, 
-            name: "Sorteo de Laptop Gaming", 
-            image_url: "https://via.placeholder.com/300x200?text=Laptop+Gaming", 
-            price_per_number: 80,
-            status: "Activo", // Información adicional que un organizador podría ver
-            tickets_sold: 150,
-            total_tickets: 500,
-            ganancia_estimada: 12000 // Ejemplo de datos solo para organizador
-          } 
-        ]; 
-        setSorteos(datosOrganizador);
-      }
+        useEffect(() => {
+                const fetchSorteos = async () => {
+                        setIsLoading(true);
+                        setError(null);
 
-      setIsLoading(false);
-    }, 1500);
-  }, [vista]); 
-  
-  // No se necesita limpiar 'raffleView' porque la vista ahora se basa en 'authToken'
+                        try {
+                                let url = `${API_BASE_URL}/api/v1/raffles/`; // URL Pública
+                                const headers = {
+                                        'Content-Type': 'application/json',
+                                };
 
+                                if (vista === 'organizador') {
+                                        url = `${API_BASE_URL}/api/v1/raffles/organizer/`; // URL Organizador
+                                        headers['Authorization'] = `Bearer ${token}`;
+                                }
 
-  if (isLoading) {
-    return (
-      <div className="raffle-loading">
-        <div className="spinner"></div>
-        <p>Cargando sorteos...</p>
-      </div>
-    );
-  }
+                                console.log(`Cargando datos desde: ${url}`);
 
-  // --- Escenario sin sorteos ---
-  if (sorteos.length === 0) {
-    return (
-      <div className="raffle-empty-state">
-        {vista === 'visitante' ? (
-            <>
-              <p>No hay sorteos disponibles en este momento. Vuelve pronto para participar.</p>
-              {/* Botón/Enlace para ir al Login */}
-              <p>¿Eres organizador? <a href="/login">Inicia Sesión aquí.</a></p> 
-            </>
-        ) : (
-            <>
-              <h2>No hay sorteos creados</h2>
-              <button
-                className="raffle-participar-btn"
-                onClick={() => (window.location.href = "/registro")}
-              >
-                Registrar Nuevo Sorteo
-              </button>
-              {/* Botón de Cerrar Sesión */}
-              <button
-                className="raffle-logout-btn"
-                onClick={handleLogout}
-              >
-                Cerrar Sesión
-              </button>
-            </>
-        )}
-      </div>
-    );
-  }
+                                const response = await fetch(url, {
+                                        method: 'GET',
+                                        headers: headers,
+                                });
 
-  return (
-    <>
-      <header className="galeria-header" id="rifas">
-        <h1>
-          {vista === 'visitante'
-            ? 'Nuestros Sorteos Activos'
-            : 'Tus Sorteos Registrados'}
-        </h1>
-        <p>
-          {vista === 'visitante'
-            ? '¡Elige tu favorito, apoya a la comunidad y gana!'
-            : 'Visualiza y administra tus sorteos.'}
-        </p>
-        {/* Botón de Cerrar Sesión visible solo para organizadores */}
-        {esOrganizador && (
-          <button
-            className="raffle-logout-btn"
-            onClick={handleLogout}
-          >
-            Cerrar Sesión
-          </button>
-        )}
-      </header>
+                                if (!response.ok) {
+                                        if (response.status === 401 && vista === 'organizador') {
+                                                handleLogout();
+                                                return;
+                                        }
+                                        throw new Error('Error al obtener los sorteos');
+                                }
 
-      <div className="raffle-gallery">
-        {sorteos.map((sorteo) => (
-          <TarjetaSorteo
-            key={sorteo.id}
-            sorteo={sorteo}
-            esOrganizador={esOrganizador}
-          />
-        ))}
-      </div>
-    </>
-  );
+                                const data = await response.json();
+                                console.log("Datos recibidos:", data);
+
+                                const listaRifas = Array.isArray(data) ? data : (data.results || []);
+
+                                if (!Array.isArray(listaRifas)) {
+                                        throw new Error("El servidor no devolvió una lista válida.");
+                                }
+
+                                const sorteosAdaptados = listaRifas.map(item => ({
+                                        id: item.id,
+                                        name: item.name,
+                                        image_url: item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`) : 'https://via.placeholder.com/300x200?text=Sin+Imagen',
+                                        price_per_number: item.price_per_number || 0
+                                }));
+
+                                setSorteos(sorteosAdaptados);
+
+                        } catch (err) {
+                                console.error("Error:", err);
+                                setError(err.message);
+                        } finally {
+                                setIsLoading(false);
+                        }
+                };
+
+                fetchSorteos();
+        }, [vista, token]);
+
+        if (isLoading) {
+                return (
+                        <div className="raffle-loading">
+                                <div className="spinner"></div>
+                                <p>Cargando sorteos de la base de datos...</p>
+                        </div>
+                );
+        }
+
+        if (error) {
+                return (
+                        <div className="raffle-empty-state">
+                                <p style={{ color: 'red' }}>Hubo un problema cargando los sorteos.</p>
+                                <small>{error}</small>
+                        </div>
+                );
+        }
+
+        if (sorteos.length === 0) {
+                return (
+                        <>
+                                <header className="galeria-header">
+                                        {vista === 'organizador' ? (
+                                                <>
+                                                        <h1>Mis Sorteos</h1>
+                                                        <p>Bienvenido, Organizador. Aquí están tus rifas creadas.</p>
+                                                </>
+                                        ) : (
+                                                <>
+                                                        <h1>Sorteos Activos</h1>
+                                                        <p>¡Participa y gana grandes premios!</p>
+                                                </>
+                                        )}
+                                </header>
+
+                                <div className="raffle-empty-state">
+                                        {vista === 'organizador' ? (
+                                                <>
+                                                        <h2>No has creado ningún sorteo aún</h2>
+                                                        <button
+                                                                className="raffle-participar-btn"
+                                                                onClick={() => navigate('/RegistroSorteo')}
+                                                                style={{ marginTop: '20px' }}
+                                                        >
+                                                                Crear mi primera Rifa
+                                                        </button>
+                                                </>
+                                        ) : (
+                                                <p>No hay sorteos disponibles en este momento. Vuelve pronto.</p>
+                                        )}
+                                        {vista === 'organizador' && (
+                                                <button className="raffle-logout-btn" onClick={handleLogout} style={{ marginTop: '20px', marginLeft: '10px' }}>
+                                                        Cerrar Sesión
+                                                </button>
+                                        )}
+                                </div>
+                        </>
+                );
+        }
+
+        return (
+                <>
+                        <header className="galeria-header">
+                                {vista === 'organizador' ? (
+                                        <>
+                                                <h1>Panel de Organizador</h1>
+                                                <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '15px' }}>
+                                                        {/* Botón Crear (Solo visual por ahora) */}
+                                                        <button
+                                                                className="raffle-participar-btn"
+                                                                style={{ fontSize: '0.9rem', padding: '8px 16px' }}
+                                                                onClick={() => navigate('/RegistroSorteo')}
+                                                        >
+                                                                + Nuevo Sorteo
+                                                        </button>
+                                                        <button
+                                                                className="raffle-logout-btn"
+                                                                style={{ fontSize: '0.9rem', padding: '8px 16px' }}
+                                                                onClick={handleLogout}
+                                                        >
+                                                                Cerrar Sesión
+                                                        </button>
+                                                </div>
+                                        </>
+                                ) : (
+                                        <>
+                                                <h1>Nuestros Sorteos Activos</h1>
+                                                <p>¡Elige tu favorito, apoya a la comunidad y gana!</p>
+                                        </>
+                                )}
+                        </header>
+
+                        <div className="raffle-gallery">
+                                {sorteos.map(sorteo => (
+                                        <TarjetaSorteo key={sorteo.id} sorteo={sorteo} />
+                                ))}
+                        </div>
+                </>
+        );
 }
