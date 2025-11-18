@@ -53,19 +53,19 @@ export default function RegistroUsuario() {
         }),
       });
 
-      /*if (!response.ok) {
+      if (!response.ok) {
         const data = await response.json();
         console.error(data);
         throw new Error(
           data.detail || 'Error al registrar el usuario. Revisa los datos.'
         );
-      }*/
+      }
 
-      if (!response.ok) {
+      /*if (!response.ok) {
         const data = await response.json();
         console.log("❌ ERROR BACKEND:", data);
         throw new Error(JSON.stringify(data));
-      }
+      }*/
 
       setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
       setTimeout(() => navigate('/login'), 2000);
