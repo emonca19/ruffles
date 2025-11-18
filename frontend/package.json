@@ -21,7 +21,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui"
   },
-  "dependenpm,ncies": {
+  "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5"
