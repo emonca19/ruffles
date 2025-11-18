@@ -1,4 +1,4 @@
-/* --- Paleta de Colores (la misma de antes) --- */
+/* --- Paleta de Colores --- */
 :root {
   --color-tarjeta: #ffffff;
   --color-titulo-acento: #a0d2eb;
@@ -6,38 +6,50 @@
   --sombra-suave: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* NAVBAR GENERAL */
 .navbar-flotante {
   position: sticky;
-  top: 0;            
-  left: 0;
+  top: 0;
   width: 100%;
+  padding: 15px 30px;
 
   background-color: var(--color-tarjeta);
   box-shadow: var(--sombra-suave);
-  padding: 15px 30px;
+
   display: flex;
-  justify-content: space-between; 
+  justify-content: space-between;
   align-items: center;
-  z-index: 1000; 
+
   border-bottom: 1px solid #eee;
-  box-sizing: border-box; 
+  box-sizing: border-box;
+
+  position: relative; /* requerido para centrar el menú */
 }
 
+/* IZQUIERDA: LOGO */
 .navbar-logo a {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--color-titulo-acento); 
+  color: var(--color-titulo-acento);
   text-decoration: none;
 }
 
+/* CENTRO ABSOLUTAMENTE CENTRADO */
 .navbar-links {
-  list-style: none; 
+  list-style: none;
   margin: 0;
   padding: 0;
+
   display: flex;
-  gap: 25px; 
+  gap: 25px;
+  align-items: center;
+
+  position: absolute;       /* ← clave */
+  left: 50%;                /* ← clave */
+  transform: translateX(-50%); /* ← clave */
 }
 
+/* ESTILOS DE LINK */
 .navbar-links a {
   color: var(--color-texto);
   text-decoration: none;
@@ -48,4 +60,30 @@
 
 .navbar-links a:hover {
   color: var(--color-titulo-acento);
+}
+
+/* DERECHA: BOTÓN */
+.navbar-auth-right {
+  margin-left: auto; /* lo empuja totalmente a la derecha */
+}
+
+/* BOTÓN CERRAR SESIÓN */
+.navbar-logout-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+
+  padding: 12px 28px;
+  border-radius: 10px;
+
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+
+  transition: background-color 0.25s ease, transform 0.2s ease;
+  box-shadow: var(--sombra-suave);
+}
+
+.navbar-logout-btn:hover {
+  background-color: #c82333;
 }

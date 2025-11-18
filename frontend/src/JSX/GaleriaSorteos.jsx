@@ -85,13 +85,6 @@ export default function GaleriaSorteos() {
               >
                 Registrar Nuevo Sorteo
               </button>
-              {/* Botón de Cerrar Sesión */}
-              <button
-                className="raffle-logout-btn"
-                onClick={handleLogout}
-              >
-                Cerrar Sesión
-              </button>
             </>
         )}
       </div>
@@ -111,15 +104,7 @@ export default function GaleriaSorteos() {
             ? '¡Elige tu favorito, apoya a la comunidad y gana!'
             : 'Visualiza y administra tus sorteos.'}
         </p>
-        {/* Botón de Cerrar Sesión visible solo para organizadores */}
-        {esOrganizador && (
-          <button
-            className="raffle-logout-btn"
-            onClick={handleLogout}
-          >
-            Cerrar Sesión
-          </button>
-        )}
+        
       </header>
 
       <div className="raffle-gallery">
