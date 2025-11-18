@@ -1,6 +1,7 @@
 from typing import ClassVar
 
 from django.utils import timezone
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from rest_framework import serializers
 
@@ -72,58 +73,76 @@ class PublicRaffleSerializer(RaffleBaseSerializer):
 
 
 class OrganizerRaffleSerializer(RaffleBaseSerializer):
-	class Meta(RaffleBaseSerializer.Meta):
-		fields: ClassVar[list[str]] = [
-			*RaffleBaseSerializer.Meta.fields,
-			"created_at",
-			"updated_at",
-			"created_by",
-			"updated_by",
-		]
+    class Meta(RaffleBaseSerializer.Meta):
+        fields: ClassVar[list[str]] = [
+            *RaffleBaseSerializer.Meta.fields,
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
 
 
 class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = Raffle
-		fields: ClassVar[list[str]] = [
-			"name",
-			"description",
-			"image",
-			"number_start",
-			"number_end",
-			"price_per_number",
-			"sale_start_at",
-			"sale_end_at",
-			"draw_scheduled_at",
-		]
-		extra_kwargs: ClassVar[dict[str, dict[str, object]]] = {
-			"image": {"required": False, "allow_null": True},
-		}
+    class Meta:
+        model = Raffle
+        fields: ClassVar[list[str]] = [
+            "name",
+            "description",
+            "image",
+            "number_start",
+            "number_end",
+            "price_per_number",
+            "sale_start_at",
+            "sale_end_at",
+            "draw_scheduled_at",
+        ]
 
-	def create(self, validated_data: dict[str, object]) -> Raffle:
-		user = self.context["request"].user
-		raffle = Raffle(
-			organizer=user,
-			created_by=user,
-			updated_by=user,
-			**validated_data,
-		)
-		raffle.full_clean()
-		raffle.save()
-		return raffle
+    def validate(self, attrs: dict) -> dict:
+        winner_raw = self.initial_data.get("winner_number")
+        if winner_raw is not None:
+            ns = attrs.get("number_start")
+            ne = attrs.get("number_end")
+            if ns is None or ne is None:
+                raise serializers.ValidationError({
+                    "winner_number": "Number range must be provided to validate winner_number."
+                })
+            try:
+                winner_val = int(winner_raw)
+            except (TypeError, ValueError):
+                raise serializers.ValidationError({"winner_number": "Invalid winner_number format."})
+            if not (ns <= winner_val <= ne):
+                raise serializers.ValidationError({"winner_number": "Winner number must fall within the configured range."})
+        return attrs
+
+    def create(self, validated_data: dict[str, object]) -> Raffle:
+        user = self.context["request"].user
+        raffle = Raffle(
+            organizer=user,
+            created_by=user,
+            updated_by=user,
+            **validated_data,
+        )
+        try:
+            raffle.full_clean()
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict)
+        raffle.save()
+        return raffle
 
 
-class RaffleNumberStatusSerializer(serializers.Serializer[RaffleNumberStatus]):
-	number = serializers.IntegerField()
-	status = serializers.CharField()
-	purchase_id = serializers.IntegerField(required=False, allow_null=True)
-	customer_name = serializers.CharField(required=False, allow_null=True)
+class RaffleNumberStatusSerializer(serializers.Serializer):
+    number = serializers.IntegerField()
+    status = serializers.CharField()
+    purchase_id = serializers.IntegerField(required=False, allow_null=True)
+    customer_name = serializers.CharField(required=False, allow_null=True)
 
 
-class RaffleAvailabilitySerializer(serializers.Serializer[RaffleAvailability]):
-	raffle_id = serializers.IntegerField()
-	range_start = serializers.IntegerField()
-	range_end = serializers.IntegerField()
-	total_numbers = serializers.IntegerField()
-	summary = serializers.DictField(child=serializers.IntegerField())
-	numbers = RaffleNumberStatusSerializer(many=True)
+class RaffleAvailabilitySerializer(serializers.Serializer):
+    raffle_id = serializers.IntegerField()
+    range_start = serializers.IntegerField()
+    range_end = serializers.IntegerField()
+    total_numbers = serializers.IntegerField()
+    summary = serializers.DictField(child=serializers.IntegerField())
+    numbers = RaffleNumberStatusSerializer(many=True)
+    

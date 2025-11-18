@@ -39,6 +39,7 @@ def get_raffle_availability(raffle: Raffle) -> RaffleAvailability:
         Purchase.objects.filter(raffle=raffle)
         .exclude(status=Purchase.Status.CANCELED)
         .select_related("customer")
+        .order_by("created_at")
         .prefetch_related(Prefetch("details", queryset=PurchaseDetail.objects.all()))
     )
 

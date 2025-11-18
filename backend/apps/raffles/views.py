@@ -7,10 +7,9 @@ from django.utils import timezone
 
 from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
-
 from drf_spectacular.utils import extend_schema
 
 from .models import Raffle
@@ -118,7 +117,7 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
     serializer_class = OrganizerRaffleSerializer
     pagination_class = RafflePagination
     permission_classes = (permissions.IsAuthenticated,)
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_queryset(self) -> QuerySet[Raffle]:
         request = cast(Request, self.request)
@@ -145,14 +144,18 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return OrganizerRaffleWriteSerializer
         return super().get_serializer_class()
-
     def perform_create(self, serializer: OrganizerRaffleWriteSerializer) -> None:
         serializer.save()
 
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
+        """Create using the write-serializer, then return the read-serializer
+        representation so the response includes read-only fields like `id`.
+        """
         write_serializer = self.get_serializer(data=request.data)
         write_serializer.is_valid(raise_exception=True)
-        raffle = write_serializer.save()
-        read_serializer = OrganizerRaffleSerializer(raffle, context=self.get_serializer_context())
+        self.perform_create(write_serializer)
+        read_serializer = OrganizerRaffleSerializer(
+            write_serializer.instance, context=self.get_serializer_context()
+        )
         headers = self.get_success_headers(read_serializer.data)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
