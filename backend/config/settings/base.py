@@ -148,6 +148,23 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Ruffles API",
+    "DESCRIPTION": "Endpoints for raffle management, purchases, and authentication.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "TAGS": [
+        {
+            "name": "Auth",
+            "description": "User registration, profile, and JWT token operations.",
+        },
+        {
+            "name": "Raffles",
+            "description": "Public raffle browsing and organizer management endpoints.",
+        },
+    ],
+}
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),

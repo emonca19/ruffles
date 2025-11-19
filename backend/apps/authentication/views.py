@@ -8,12 +8,18 @@ from rest_framework import generics, permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema
 
 from .serializers import RegistrationSerializer, UserSerializer
 
 User = get_user_model()
 
 
+@extend_schema(
+    tags=["Auth"],
+    summary="Register a new user",
+    description="Creates a user account and returns a JWT access/refresh pair.",
+)
 class RegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistrationSerializer
@@ -35,6 +41,11 @@ class RegistrationView(generics.CreateAPIView):
         )
 
 
+@extend_schema(
+    tags=["Auth"],
+    summary="Retrieve current user profile",
+    description="Returns the authenticated user's profile information.",
+)
 class CurrentUserView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)

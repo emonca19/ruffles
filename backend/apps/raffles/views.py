@@ -68,6 +68,11 @@ class RafflePagination(PageNumberPagination):
     max_page_size = 60
 
 
+@extend_schema(
+    tags=["Raffles"],
+    summary="List public raffles",
+    description="Returns a paginated list of raffles with optional state/on_sale filters.",
+)
 class RaffleListView(generics.ListAPIView):
     request: Request
     serializer_class = PublicRaffleSerializer
@@ -99,6 +104,11 @@ class RaffleListView(generics.ListAPIView):
         return queryset
 
 
+@extend_schema(
+    tags=["Raffles"],
+    summary="Retrieve raffle availability",
+    description="Shows ticket availability and sold counts for a specific raffle.",
+)
 class RaffleAvailabilityView(generics.RetrieveAPIView):
     serializer_class = RaffleAvailabilitySerializer
     permission_classes = (permissions.AllowAny,)
@@ -109,6 +119,9 @@ class RaffleAvailabilityView(generics.RetrieveAPIView):
 
 
 @extend_schema(
+    tags=["Raffles"],
+    summary="List or create organizer raffles",
+    description="Authenticated organizers can list their raffles or create a new one.",
     request=OrganizerRaffleWriteSerializer,
     responses=OrganizerRaffleSerializer,
 )
