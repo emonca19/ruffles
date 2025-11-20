@@ -102,7 +102,7 @@ export default function RegistroUsuario() {
       }
 
       setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/rifas'), 2000);
     } catch (err) {
       setError(err.message);
     }
