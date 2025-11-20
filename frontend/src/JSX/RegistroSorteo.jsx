@@ -81,9 +81,27 @@ export default function RegistroSorteo() {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        console.error("Error:", text);
-        alert("Error al registrar el sorteo");
+        const rawError = await response.text();
+        let errorMessage = "Error al registrar el sorteo";
+
+        try {
+          const parsedError = JSON.parse(rawError);
+          const firstKey = Object.keys(parsedError)[0];
+
+          if (firstKey) {
+            const firstValue = parsedError[firstKey];
+            if (Array.isArray(firstValue) && firstValue.length > 0) {
+              errorMessage = firstValue[0];
+            } else if (typeof firstValue === "string") {
+              errorMessage = firstValue;
+            }
+          }
+        } catch (parseError) {
+          console.error("No se pudo analizar la respuesta de error como JSON:", parseError);
+        }
+
+        console.error("Error:", rawError);
+        alert(errorMessage);
         return;
       }
 
