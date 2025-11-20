@@ -21,9 +21,10 @@ function App() {
         <Route path="/registro" element={<RegistroSorteo />} />
         <Route path="/contacto" element={<GaleriaSorteos />} />
         <Route path="/detalle/:id" element={<RuffleDetail />} />
+        <Route path="/registroUsuario" element={<RegistroUsuario />} />
         </Route>
 
-        <Route path="/registroUsuario" element={<RegistroUsuario />} />
+        
         <Route path="/login" element={<Login />} />
       </Routes>
     </div>

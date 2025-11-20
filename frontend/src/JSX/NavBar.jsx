@@ -19,17 +19,20 @@ export default function Navbar() {
         <Link to="/">Rifas Iglesia</Link>
       </div>
 
-      {/* CENTRO: ENLACES (NO SE MUEVEN) */}
+
       <ul className="navbar-links">
         <li><Link to="/inicio">Inicio</Link></li>
         <li><Link to="/rifas">Rifas</Link></li>
         {esOrganizador && (
           <li><Link to="/registro">Crear Sorteo</Link></li>
         )}
+        {esOrganizador && (
+          <li><Link to="/registroUsuario">Registrar Organizador</Link></li>
+        )}
         {/*<li><Link to="/contacto">Contacto</Link></li> */}
       </ul>
 
-      {/* DERECHA: BOTÓN */}
+
       <div className="navbar-auth-right">
         {esOrganizador && (
           <button 
@@ -40,7 +43,6 @@ export default function Navbar() {
           </button>
         )}
       </div>
-
     </nav>
   );
 }
