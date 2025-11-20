@@ -101,7 +101,7 @@ export default function RegistroUsuario() {
         return;
       }
 
-      setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
+      setSuccess('¡Registro exitoso! Redirigiendo a la galeria de sorteos...');
       setTimeout(() => navigate('/rifas'), 2000);
     } catch (err) {
       setError(err.message);
