@@ -67,6 +67,11 @@ class RafflePagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 60
 
+class RaffleDetailView(generics.RetrieveAPIView):
+    queryset = Raffle.objects.filter(deleted_at__isnull=True)
+    serializer_class = PublicRaffleSerializer
+    permission_classes = [permissions.AllowAny]
+
 
 @extend_schema(
     tags=["Raffles"],

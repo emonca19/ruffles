@@ -57,7 +57,7 @@ export default function RegistroSorteo() {
 
     dataToSend.append("name", formData.name);
     dataToSend.append("description", formData.description);
-    dataToSend.append("number_start", 1);
+    dataToSend.append("number_start", 0);
     dataToSend.append("number_end", formData.number_end);
     dataToSend.append("price_per_number", formData.price_per_number);
 

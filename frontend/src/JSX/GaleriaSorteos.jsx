@@ -32,7 +32,7 @@ export default function GaleriaSorteos() {
                 };
 
                 if (vista === 'organizador') {
-                    url = `${API_BASE_URL}/api/v1/raffles/organizer/`;
+                    url = `${API_BASE_URL}/api/v1/raffles/`;
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 

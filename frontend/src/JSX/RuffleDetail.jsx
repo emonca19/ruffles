@@ -2,173 +2,254 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../CSS/RuffleDetail.css";
 
+// Ajusta tu URL base
+const API_BASE_URL = 'http://localhost:8000'; 
+
 export default function RuffleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // --- ESTADOS DE DATOS ---
   const [sorteo, setSorteo] = useState(null);
+  const [numerosOcupados, setNumerosOcupados] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showPopup, setShowPopup] = useState(false);
+  const [error, setError] = useState(null);
 
+  // --- ESTADOS DE INTERACCIÓN ---
+  const [seleccionados, setSeleccionados] = useState([]); // Carrito de números
+  const [centenaActiva, setCentenaActiva] = useState(null); // Modal de números (0, 1, 2...)
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false); // Modal final de datos
+  
+  // --- ESTADO DEL FORMULARIO DE USUARIO ---
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
-    number: "",
+    nombre: "", // Agregado por si quieres guardar el nombre del comprador
   });
 
+  // --- 1. CARGA DE DATOS (Rifa + Disponibilidad) ---
   useEffect(() => {
-    // Simula obtener datos reales de API
-    setTimeout(() => {
-      const datosSimulados = [
-        {
-          id: 1,
-          name: "iPhone 15 Pro",
-          image_url:
-            "https://m.media-amazon.com/images/I/81fO2C9cYjL._AC_SY300_SX300_QL70_ML2_.jpg",
-          price_per_number: 100,
-          description:
-            "Participa por un increíble iPhone 15 Pro con 256GB de almacenamiento, triple cámara y tecnología de punta.",
-          deadline: "2025-12-30",
-        },
-        {
-          id: 2,
-          name: "Canasta de Regalo",
-          image_url:
-            "https://mantelyservilleta.com/cdn/shop/files/RegaloCajaGourmetULTRAPremium-mantelyservilleta_1_1024x1024@2x.jpg?v=1699581917",
-          price_per_number: 50,
-          description:
-            "Canasta gourmet con productos seleccionados de alta calidad, ideal para regalar o disfrutar en casa.",
-          deadline: "2025-11-25",
-        },
-        {
-          id: 3,
-          name: "Viaje a la Playa",
-          image_url:
-            "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?ixlib=rb-4.1.0&auto=format&fit=crop&w=1074&q=80",
-          price_per_number: 250,
-          description:
-            "Disfruta unas vacaciones inolvidables en la playa con todo incluido. ¡Relájate bajo el sol!",
-          deadline: "2025-12-15",
-        },
-      ];
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // A) Obtener detalles de la rifa
+        const respRifa = await fetch(`${API_BASE_URL}/api/v1/raffles/${id}/`);
+        if (!respRifa.ok) throw new Error("No se pudo cargar la rifa");
+        const dataRifa = await respRifa.json();
 
-      const encontrado = datosSimulados.find(
-        (item) => item.id === parseInt(id)
-      );
-      setSorteo(encontrado);
-      setIsLoading(false);
-    }, 800);
+        // Adaptador de imagen (si viene relativa o absoluta)
+        if (dataRifa.image && !dataRifa.image.startsWith('http')) {
+             dataRifa.image_url = `${API_BASE_URL}${dataRifa.image}`;
+        } else {
+             dataRifa.image_url = dataRifa.image || "https://via.placeholder.com/600x400?text=Sin+Imagen";
+        }
+        
+        // Asegurar precio
+        dataRifa.price_per_number = dataRifa.ticket_price || dataRifa.price_per_number || 0;
+
+        // B) Obtener números ocupados
+        const respAvail = await fetch(`${API_BASE_URL}/api/v1/raffles/${id}/availability/`);
+        const dataAvail = await respAvail.json();
+        
+        setSorteo(dataRifa);
+        setNumerosOcupados(dataAvail.taken_numbers || []);
+
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
-  const handleChange = (e) => {
+  const totalBoletos = sorteo ? sorteo.number_end : 100;
+  const totalCentenas = Math.ceil(totalBoletos / 100);
+  const listaCentenas = Array.from({ length: totalCentenas }, (_, i) => i);
+  
+  const toggleNumero = (numero) => {
+    if (numerosOcupados.includes(numero)) return;
+    
+    if (seleccionados.includes(numero)) {
+      setSeleccionados(seleccionados.filter(n => n !== numero));
+    } else {
+      setSeleccionados([...seleccionados, numero]);
+    }
+  };
+
+  const handleFormChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleParticipar = () => {
-    if (!formData.email || !formData.phone || !formData.number) {
-      alert("Por favor completa todos los campos.");
-      return;
-    }
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 2000);
+  const handleCompraFinal = async () => {
+    // Aquí iría POST para crear la orden
+    alert(`¡Compra Exitosa!\nNúmeros: ${seleccionados.join(', ')}\nUsuario: ${formData.email}`);
+    
+    setSeleccionados([]);
+    setMostrarConfirmacion(false);
+    window.location.reload();
   };
 
-  if (isLoading) {
-    return (
-      <div className="raffle-loading">
-        <div className="spinner"></div>
-        <p>Cargando detalle del sorteo...</p>
-      </div>
-    );
-  }
+  const totalPagar = seleccionados.length * (sorteo?.price_per_number || 0);
 
-  if (!sorteo) {
-    return (
-      <div className="raffle-detail">
-        <h2>Sorteo no encontrado</h2>
-        <button className="back-btn" onClick={() => navigate("/")}>
-          Volver a la galería
-        </button>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="loading-screen"><div className="spinner"></div></div>;
+  if (error) return <div className="error-screen">{error}</div>;
+  if (!sorteo) return null;
 
   return (
-    <div className="raffle-detail-container">
-      <button className="back-btn" onClick={() => navigate("/rifas")}>
-        Volver
-      </button>
+    <div className="ruffle-detail-container">
+      <div className="detail-header">
+        <div className="detail-image-container">
+          <img src={sorteo.image_url} alt={sorteo.name} className="detail-image" />
+        </div>
+        <div className="detail-info">
+          <h1>{sorteo.name}</h1>
+          <p className="detail-description">{sorteo.description}</p>
+          
+          <div className="detail-meta">
+            <div className="meta-item price">
+              <span>Precio por boleto:</span>
+              <strong>${sorteo.price_per_number} MXN</strong>
+            </div>
+            <div className="meta-item date">
+              <span>Cierra el:</span>
+              <strong>{sorteo.deadline || "Sin fecha"}</strong>
+            </div>
+          </div>
 
-      <div className="raffle-detail-card">
-        <img
-          src={sorteo.image_url}
-          alt={sorteo.name}
-          className="raffle-detail-img"
-        />
-
-        <div className="raffle-detail-info">
-          <h1 className="raffle-detail-title">{sorteo.name}</h1>
-          <p className="raffle-detail-description">{sorteo.description}</p>
-          <p className="raffle-detail-price">
-            Precio por boleto:{" "}
-            <span>
-              {new Intl.NumberFormat("es-MX", {
-                style: "currency",
-                currency: "MXN",
-              }).format(sorteo.price_per_number)}
-            </span>
-          </p>
-
-          <p className="raffle-detail-date">
-            Fecha límite de compra: <strong>{sorteo.deadline}</strong>
-          </p>
-
-          <form className="participation-form">
-            <label>Correo electrónico:</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="ejemplo@correo.com"
-              value={formData.email}
-              onChange={handleChange}
-            />
-
-            <label>Número de teléfono:</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="662-123-4567"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-
-            <label>Número que deseas elegir (1-100):</label>
-            <input
-              type="number"
-              name="number"
-              min="1"
-              max="100"
-              placeholder="Ej. 27"
-              value={formData.number}
-              onChange={handleChange}
-            />
-
-            <button
-              type="button"
-              className="raffle-participar-btn"
-              onClick={handleParticipar}
-            >
-              Participar
-            </button>
-          </form>
+          <div className="instructions-box">
+            <h3>¿Cómo participar?</h3>
+            <p>1. Selecciona abajo una tarjeta (centena).<br/>
+               2. Elige tus números de la suerte.<br/>
+               3. Haz clic en "Apartar" para completar tus datos.</p>
+          </div>
         </div>
       </div>
 
-      {showPopup && (
-        <div className="popup-success">
-          <h2>✅ Apartado Exitoso</h2>
-          <p>Tu número ha sido registrado correctamente.</p>
+      <div className="centenas-section">
+        <h2>Selecciona tus números</h2>
+        <div className="centenas-grid">
+          {listaCentenas.map((index) => {
+            const inicio = index * 100;
+            const fin = Math.min((index + 1) * 100 - 1, totalBoletos - 1);
+            
+            const ocupadosEnEsta = numerosOcupados.filter(n => n >= inicio && n <= fin).length;
+            const porcentaje = (ocupadosEnEsta / 100) * 100;
+            
+            const seleccionadosEnEsta = seleccionados.filter(n => n >= inicio && n <= fin).length;
+
+            return (
+              <div 
+                key={index} 
+                className={`centena-card ${seleccionadosEnEsta > 0 ? 'has-selection' : ''}`}
+                onClick={() => setCentenaActiva(index)}
+              >
+                <h3>{inicio} - {fin}</h3>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${porcentaje}%` }}></div>
+                </div>
+                <div className="card-status">
+                  <span>{100 - ocupadosEnEsta} libres</span>
+                  {seleccionadosEnEsta > 0 && <span className="badge-sel">{seleccionadosEnEsta} tuyos</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {centenaActiva !== null && (
+        <div className="modal-overlay" onClick={() => setCentenaActiva(null)}>
+          <div className="modal-content numbers-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Centena {centenaActiva * 100} - {Math.min((centenaActiva + 1) * 100 - 1, totalBoletos - 1)}</h3>
+              <button className="close-btn" onClick={() => setCentenaActiva(null)}>×</button>
+            </div>
+            
+            <div className="numeros-grid">
+              {Array.from({ length: 100 }, (_, i) => {
+                const numeroReal = (centenaActiva * 100) + i;
+                if (numeroReal >= totalBoletos) return null;
+
+                const esOcupado = numerosOcupados.includes(numeroReal);
+                const esSeleccionado = seleccionados.includes(numeroReal);
+
+                return (
+                  <button
+                    key={numeroReal}
+                    className={`numero-btn ${esOcupado ? 'ocupado' : ''} ${esSeleccionado ? 'seleccionado' : ''}`}
+                    onClick={() => toggleNumero(numeroReal)}
+                    disabled={esOcupado}
+                  >
+                    {numeroReal.toString().padStart(3, '0')}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <div className="modal-footer">
+              <button className="primary-btn" onClick={() => setCentenaActiva(null)}>
+                Listo, seguir viendo
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
+      {mostrarConfirmacion && (
+        <div className="modal-overlay">
+          <div className="modal-content confirm-modal">
+            <div className="modal-header">
+              <h3>Completa tus datos</h3>
+              <button className="close-btn" onClick={() => setMostrarConfirmacion(false)}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="summary-box">
+                <p><strong>Números:</strong> {seleccionados.join(', ')}</p>
+                <p><strong>Total a Pagar:</strong> <span className="price-highlight">${totalPagar} MXN</span></p>
+              </div>
+
+              <form className="confirm-form" onSubmit={(e) => { e.preventDefault(); handleCompraFinal(); }}>
+                <label>Nombre Completo</label>
+                <input 
+                  type="text" name="nombre" required 
+                  value={formData.nombre} onChange={handleFormChange}
+                />
+                
+                <label>Correo Electrónico</label>
+                <input 
+                  type="email" name="email" required 
+                  value={formData.email} onChange={handleFormChange}
+                />
+
+                <label>Teléfono (WhatsApp)</label>
+                <input 
+                  type="tel" name="phone" required 
+                  value={formData.phone} onChange={handleFormChange}
+                />
+
+                <button type="submit" className="pay-btn">Confirmar Apartado</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {seleccionados.length > 0 && !mostrarConfirmacion && (
+        <div className="checkout-bar">
+          <div className="checkout-info">
+            <div className="checkout-count">{seleccionados.length} números</div>
+            <div className="checkout-total">Total: ${totalPagar}</div>
+          </div>
+          <button className="apartar-btn" onClick={() => setMostrarConfirmacion(true)}>
+            Apartar Ahora
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }
