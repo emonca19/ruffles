@@ -24,7 +24,7 @@ export default function RuffleDetail() {
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
-    nombre: "", // Agregado por si quieres guardar el nombre del comprador
+    nombre: "", 
   });
 
   // --- 1. CARGA DE DATOS (Rifa + Disponibilidad) ---
@@ -37,7 +37,7 @@ export default function RuffleDetail() {
         if (!respRifa.ok) throw new Error("No se pudo cargar la rifa");
         const dataRifa = await respRifa.json();
 
-        // Adaptador de imagen (si viene relativa o absoluta)
+        // Adaptador de imagen
         if (dataRifa.image && !dataRifa.image.startsWith('http')) {
              dataRifa.image_url = `${API_BASE_URL}${dataRifa.image}`;
         } else {
@@ -46,6 +46,30 @@ export default function RuffleDetail() {
         
         // Asegurar precio
         dataRifa.price_per_number = dataRifa.ticket_price || dataRifa.price_per_number || 0;
+
+        // --- ADAPTADOR DE FECHA (CORREGIDO CON UTC) ---
+        // Configuración para evitar el desfase de horario
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            timeZone: 'UTC' // <--- ESTO ES LO QUE ARREGLA LA FECHA
+        };
+
+        // Fecha de Cierre (sale_end_at)
+        if (dataRifa.sale_end_at) {
+            dataRifa.formatted_date = new Date(dataRifa.sale_end_at).toLocaleDateString('es-MX', options);
+        } else {
+            dataRifa.formatted_date = "Fecha por definir";
+        }
+
+        // Fecha del Sorteo (draw_scheduled_at)
+        if (dataRifa.draw_scheduled_at) {
+            dataRifa.formatted_draw_date = new Date(dataRifa.draw_scheduled_at).toLocaleDateString('es-MX', options);
+        } else {
+            dataRifa.formatted_draw_date = "Fecha por definir";
+        }
+
 
         // B) Obtener números ocupados
         const respAvail = await fetch(`${API_BASE_URL}/api/v1/raffles/${id}/availability/`);
@@ -64,11 +88,12 @@ export default function RuffleDetail() {
 
     fetchData();
   }, [id]);
-
   const totalBoletos = sorteo ? sorteo.number_end : 100;
+  
   const totalCentenas = Math.ceil(totalBoletos / 100);
   const listaCentenas = Array.from({ length: totalCentenas }, (_, i) => i);
   
+  // --- 3. MANEJADORES ---
   const toggleNumero = (numero) => {
     if (numerosOcupados.includes(numero)) return;
     
@@ -86,7 +111,6 @@ export default function RuffleDetail() {
   const handleCompraFinal = async () => {
     // Aquí iría POST para crear la orden
     alert(`¡Compra Exitosa!\nNúmeros: ${seleccionados.join(', ')}\nUsuario: ${formData.email}`);
-    
     setSeleccionados([]);
     setMostrarConfirmacion(false);
     window.location.reload();
@@ -113,9 +137,17 @@ export default function RuffleDetail() {
               <span>Precio por boleto:</span>
               <strong>${sorteo.price_per_number} MXN</strong>
             </div>
+            
+            {/* Fecha de cierre */}
             <div className="meta-item date">
               <span>Cierra el:</span>
-              <strong>{sorteo.deadline || "Sin fecha"}</strong>
+              <strong>{sorteo.formatted_date}</strong>
+            </div>
+            
+            {/* Fecha del sorteo */}
+            <div className="meta-item draw-date">
+              <span>Se juega el:</span>
+              <strong>{sorteo.formatted_draw_date}</strong>
             </div>
           </div>
 
@@ -249,7 +281,6 @@ export default function RuffleDetail() {
           </button>
         </div>
       )}
-
     </div>
   );
 }
