@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "../CSS/RegistroSorteo.css";
 
 export default function RegistroSorteo() {
@@ -19,6 +19,29 @@ export default function RegistroSorteo() {
   const fileInputRef = useRef(null);
 
   const token = localStorage.getItem("authToken");
+
+  const isFormDirty =
+    formData.name ||
+    formData.description ||
+    Number(formData.number_end) !== 0 ||
+    formData.price_per_number ||
+    formData.sale_start_at ||
+    formData.sale_end_at ||
+    formData.draw_scheduled_at ||
+    imageFile;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!isFormDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isFormDirty]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

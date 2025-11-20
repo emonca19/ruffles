@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../CSS/RegistroAdmin.module.css';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config/apiRegistroAdmin.js';
@@ -17,6 +17,25 @@ export default function RegistroUsuario() {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const isFormDirty =
+    formData.name ||
+    formData.email ||
+    formData.phone ||
+    formData.user_type !== 'organizer' ||
+    formData.password1 ||
+    formData.password2;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!isFormDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isFormDirty]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,18 +73,33 @@ export default function RegistroUsuario() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        console.error(data);
-        throw new Error(
-          data.detail || 'Error al registrar el usuario. Revisa los datos.'
-        );
-      }
+        const rawError = await response.text();
+        let errorMessage = 'Error al registrar el usuario. Revisa los datos.';
 
-      /*if (!response.ok) {
-        const data = await response.json();
-        console.log("❌ ERROR BACKEND:", data);
-        throw new Error(JSON.stringify(data));
-      }*/
+        try {
+          const parsedError = JSON.parse(rawError);
+
+          if (parsedError.detail && typeof parsedError.detail === 'string') {
+            errorMessage = parsedError.detail;
+          } else {
+            const firstKey = Object.keys(parsedError)[0];
+            if (firstKey) {
+              const firstValue = parsedError[firstKey];
+              if (Array.isArray(firstValue) && firstValue.length > 0) {
+                errorMessage = firstValue[0];
+              } else if (typeof firstValue === 'string') {
+                errorMessage = firstValue;
+              }
+            }
+          }
+        } catch (parseError) {
+          console.error('No se pudo analizar la respuesta de error como JSON:', parseError);
+        }
+
+        console.error('Error:', rawError);
+        setError(errorMessage);
+        return;
+      }
 
       setSuccess('¡Registro exitoso! Redirigiendo al inicio de sesión...');
       setTimeout(() => navigate('/login'), 2000);
@@ -158,4 +192,3 @@ export default function RegistroUsuario() {
     </div>
   );
 }
-
