@@ -125,9 +125,8 @@ describe('PRUEBAS FORMULARIO REGISTRO SORTEO - 5 Puntos Clave', () => {
     });
   });
 
-  // ============================================================
-  // 3. MENSAJES DE ERROR Y ÉXITO
-  // ============================================================
+  
+  // 3. mensajes de error exito
   describe('3. Mensajes de error y éxito', () => {
 
     test('muestra mensaje de éxito cuando API responde ok', async () => {

@@ -13,16 +13,14 @@
     "test:unit": "vitest run src/service/ src/utils/",
     "test:functional": "vitest run src",
     "test:login": "vitest run src/service/autentication.test.jsx",
-    
     "test:registro": "vitest run  src/service/RegisterForm.test.jsx",
     "test:registro:watch": "vitest src/service/RegisterForm.test.jsx",
     "test:registro:coverage": "vitest run src/service/RegisterForm.test.jsx --coverage",
-    
-  
     "test:sorteo": "vitest run src/service/crearSorteo.test.jsx",
     "test:sorteo:watch": "vitest src/service/crearSorteo.test.jsx",
     "test:sorteo:coverage": "vitest run src/service/crearSorteo.test.jsx --coverage",
-    
+    "test:tabla-numeros": "vitest run src/service/TablaNumeros.test.jsx --reporter=verbose",
+    "test:tabla-numeros:report": "vitest run src/service/tablaNumeros.test.jsx --reporter=junit --outputFile=./test-results/tabla-numeros.xml",
     "test:all": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -31,7 +29,7 @@
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5"
+    "react-router-dom": "^7.9.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
