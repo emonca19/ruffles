@@ -107,6 +107,9 @@ class Raffle(models.Model):
         ):
             errors["number_end"] = "End number must be greater than start number."
 
+        if self.sale_start_at and self.sale_start_at <= timezone.now():
+            errors["sale_start_at"] = "Sale start date must be in the future."
+
         if (
             self.sale_start_at
             and self.sale_end_at
