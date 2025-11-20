@@ -122,7 +122,6 @@ export default function RegistroUsuario() {
               onChange={handleChange}
             >
               <option value="organizador">Organizador</option>
-              <option value="administrador">Administrador</option>
             </select>
           </div>
 
