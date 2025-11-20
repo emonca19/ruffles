@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "../CSS/RegistroSorteo.css";
 
 export default function RegistroSorteo() {
@@ -16,6 +16,8 @@ export default function RegistroSorteo() {
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  const fileInputRef = useRef(null);
+
   const token = localStorage.getItem("authToken");
 
   const handleChange = (e) => {
@@ -25,7 +27,6 @@ export default function RegistroSorteo() {
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -75,9 +76,7 @@ export default function RegistroSorteo() {
     try {
       const response = await fetch("http://localhost:8000/api/v1/raffles/organizer/", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: dataToSend,
       });
 
@@ -89,7 +88,7 @@ export default function RegistroSorteo() {
       }
 
       alert("Sorteo registrado exitosamente");
-      
+
       setFormData({
         name: "",
         description: "",
@@ -113,7 +112,7 @@ export default function RegistroSorteo() {
       <h2>Registrar Nuevo Sorteo</h2>
 
       <form onSubmit={handleSubmit} className="registro-sorteo-form">
-
+        
         <label>Nombre del sorteo</label>
         <input type="text" name="name" value={formData.name} onChange={handleChange} required />
 
@@ -124,6 +123,7 @@ export default function RegistroSorteo() {
         <label>Imagen del sorteo</label>
         <div
           className={`dropzone ${isDragging ? "dragging" : ""}`}
+          onClick={() => fileInputRef.current.click()}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -133,16 +133,22 @@ export default function RegistroSorteo() {
           ) : (
             <p>Arrastra una imagen aquí o haz clic para seleccionarla</p>
           )}
-          <input type="file" accept="image/*" onChange={handleImageSelect} required />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            style={{ display: "none" }}
+          />
         </div>
 
-        <label>Total de numeros</label>
+        <label>Total de números</label>
         <input type="number" name="number_end" value={formData.number_end} onChange={handleChange} min="1" required />
 
         <label>Precio por número</label>
         <input type="number" name="price_per_number" value={formData.price_per_number} onChange={handleChange} step="0.01" min="1" required />
 
-        {/* FECHAS SOLO TIPO DATE */}
         <label>Inicio de venta</label>
         <input type="date" name="sale_start_at" value={formData.sale_start_at} onChange={handleChange} required />
 
