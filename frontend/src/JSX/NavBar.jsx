@@ -26,7 +26,7 @@ export default function Navbar() {
         {esOrganizador && (
           <li><Link to="/registro">Crear Sorteo</Link></li>
         )}
-        <li><Link to="/contacto">Contacto</Link></li>
+        {/*<li><Link to="/contacto">Contacto</Link></li> */}
       </ul>
 
       {/* DERECHA: BOTÓN */}

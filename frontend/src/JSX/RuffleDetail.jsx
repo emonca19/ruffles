@@ -27,43 +27,37 @@ export default function RuffleDetail() {
     nombre: "", 
   });
 
-  // --- 1. CARGA DE DATOS (Rifa + Disponibilidad) ---
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // A) Obtener detalles de la rifa
         const respRifa = await fetch(`${API_BASE_URL}/api/v1/raffles/${id}/`);
         if (!respRifa.ok) throw new Error("No se pudo cargar la rifa");
         const dataRifa = await respRifa.json();
 
-        // Adaptador de imagen
         if (dataRifa.image && !dataRifa.image.startsWith('http')) {
              dataRifa.image_url = `${API_BASE_URL}${dataRifa.image}`;
         } else {
              dataRifa.image_url = dataRifa.image || "https://via.placeholder.com/600x400?text=Sin+Imagen";
         }
         
-        // Asegurar precio
         dataRifa.price_per_number = dataRifa.ticket_price || dataRifa.price_per_number || 0;
-
-        // --- ADAPTADOR DE FECHA (CORREGIDO CON UTC) ---
-        // Configuración para evitar el desfase de horario
+        
         const options = { 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric', 
-            timeZone: 'UTC' // <--- ESTO ES LO QUE ARREGLA LA FECHA
+            timeZone: 'UTC'
         };
 
-        // Fecha de Cierre (sale_end_at)
+
         if (dataRifa.sale_end_at) {
             dataRifa.formatted_date = new Date(dataRifa.sale_end_at).toLocaleDateString('es-MX', options);
         } else {
             dataRifa.formatted_date = "Fecha por definir";
         }
 
-        // Fecha del Sorteo (draw_scheduled_at)
+
         if (dataRifa.draw_scheduled_at) {
             dataRifa.formatted_draw_date = new Date(dataRifa.draw_scheduled_at).toLocaleDateString('es-MX', options);
         } else {
@@ -71,7 +65,7 @@ export default function RuffleDetail() {
         }
 
 
-        // B) Obtener números ocupados
+
         const respAvail = await fetch(`${API_BASE_URL}/api/v1/raffles/${id}/availability/`);
         const dataAvail = await respAvail.json();
         
@@ -93,7 +87,7 @@ export default function RuffleDetail() {
   const totalCentenas = Math.ceil(totalBoletos / 100);
   const listaCentenas = Array.from({ length: totalCentenas }, (_, i) => i);
   
-  // --- 3. MANEJADORES ---
+
   const toggleNumero = (numero) => {
     if (numerosOcupados.includes(numero)) return;
     
@@ -109,7 +103,7 @@ export default function RuffleDetail() {
   };
 
   const handleCompraFinal = async () => {
-    // Aquí iría POST para crear la orden
+
     alert(`¡Compra Exitosa!\nNúmeros: ${seleccionados.join(', ')}\nUsuario: ${formData.email}`);
     setSeleccionados([]);
     setMostrarConfirmacion(false);
@@ -138,13 +132,13 @@ export default function RuffleDetail() {
               <strong>${sorteo.price_per_number} MXN</strong>
             </div>
             
-            {/* Fecha de cierre */}
+
             <div className="meta-item date">
               <span>Cierra el:</span>
               <strong>{sorteo.formatted_date}</strong>
             </div>
             
-            {/* Fecha del sorteo */}
+
             <div className="meta-item draw-date">
               <span>Se juega el:</span>
               <strong>{sorteo.formatted_draw_date}</strong>

@@ -149,22 +149,6 @@ export default function GaleriaSorteos() {
                 {vista === 'organizador' ? (
                     <>
                         <h1>Panel de Organizador</h1>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '15px' }}>
-                            <button
-                                className="raffle-participar-btn"
-                                style={{ fontSize: '0.9rem', padding: '8px 16px' }}
-                                onClick={() => navigate('/RegistroSorteo')}
-                            >
-                                + Nuevo Sorteo
-                            </button>
-                            <button
-                                className="raffle-logout-btn"
-                                style={{ fontSize: '0.9rem', padding: '8px 16px' }}
-                                onClick={handleLogout}
-                            >
-                                Cerrar Sesión
-                            </button>
-                        </div>
                     </>
                 ) : (
                     <>
