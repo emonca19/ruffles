@@ -133,6 +133,8 @@ class Payment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="payments_recorded",
+        null=True,
+        blank=True,
     )
 
     def __str__(self) -> str:
