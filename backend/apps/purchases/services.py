@@ -25,9 +25,9 @@ def create_reservation(
         guest_info = {}
 
     with transaction.atomic():
-        # 1. Get Raffle (lock it if necessary, but for now just get)
+        # 1. Get Raffle (lock it to prevent race conditions)
         try:
-            raffle = Raffle.objects.get(pk=raffle_id)
+            raffle = Raffle.objects.select_for_update().get(pk=raffle_id)
         except Raffle.DoesNotExist:
             raise ValidationError("Raffle not found.") from None
 
