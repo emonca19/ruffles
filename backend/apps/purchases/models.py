@@ -59,7 +59,12 @@ class Purchase(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="raffle_purchases",
+        null=True,
+        blank=True,
     )
+    guest_name = models.CharField(max_length=255, blank=True, default="")
+    guest_phone = models.CharField(max_length=20, blank=True, default="")
+    guest_email = models.EmailField(blank=True, default="")
     status = models.CharField(
         max_length=16, choices=Status.choices, default=Status.PENDING
     )
@@ -85,6 +90,15 @@ class Purchase(models.Model):
     def __str__(self) -> str:
         raffle_ref = getattr(self, "raffle_id", None)
         return f"Purchase #{self.pk} for raffle {raffle_ref or 'unknown'}"
+
+    def clean(self) -> None:
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if not self.customer and not self.guest_phone:
+            raise ValidationError(
+                "Purchase must have either a registered customer or a guest phone number."
+            )
 
 
 class PurchaseDetail(models.Model):
