@@ -111,3 +111,33 @@ class ReservationTests(APITestCase):
         }
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reservation_invalid_phone(self):
+        """
+        Test 6: Invalid phone number format is rejected.
+        """
+        data = {
+            "raffle_id": self.raffle.id,
+            "numbers": [40],
+            "guest_name": "Guest",
+            "guest_phone": "invalid-phone-abc",  # Invalid format
+            "guest_email": "guest@example.com",
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("guest_phone", str(response.data))
+
+    def test_reservation_short_phone(self):
+        """
+        Test 7: Phone number too short (9 digits) is rejected.
+        """
+        data = {
+            "raffle_id": self.raffle.id,
+            "numbers": [41],
+            "guest_name": "Guest",
+            "guest_phone": "644499498",  # 9 digits
+            "guest_email": "guest@example.com",
+        }
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("guest_phone", str(response.data))

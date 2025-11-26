@@ -31,6 +31,9 @@ def create_reservation(
         except Raffle.DoesNotExist:
             raise ValidationError("Raffle not found.") from None
 
+        if not raffle.is_on_sale:
+            raise ValidationError("Raffle is not currently on sale.")
+
         # 2. Validate Numbers Range
         for num in numbers:
             if not (raffle.number_start <= num <= raffle.number_end):

@@ -1,5 +1,7 @@
 from typing import Any
 
+from django.core.validators import RegexValidator
+
 from rest_framework import serializers
 
 
@@ -9,7 +11,12 @@ class ReservationSerializer(serializers.Serializer):
         child=serializers.IntegerField(min_value=0), allow_empty=False
     )
     guest_name = serializers.CharField(required=False, allow_blank=True)
-    guest_phone = serializers.CharField(required=False, allow_blank=True)
+    guest_phone = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        min_length=10,
+        validators=[RegexValidator(r"^[0-9+().\-\s]*$", "Enter a valid phone number.")],
+    )
     guest_email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:

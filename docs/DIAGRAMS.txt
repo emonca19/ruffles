@@ -1,0 +1,429 @@
+**DOMAIN**  
+@startuml Raffle_Administration_System
+
+\!define primary_key(x) <b\><color:\#b8861b\><\&key\></color\> x</b\>  
+\!define foreign_key(x) <color:\#aaaaaa\><\&key\></color\> x  
+\!define column(x) <color:\#efefef\><\&media-record\></color\> x
+
+skinparam linetype ortho  
+skinparam roundcorner 20  
+skinparam class {  
+    BackgroundColor White  
+}
+
+' ============================================  
+' TITLE AND GENERAL DESCRIPTION  
+' ============================================
+
+title Raffle Administration System for a Non-Profit Association
+
+' ============================================  
+' ENTITIES  
+' ============================================
+
+entity "User" as user {  
+  primary_key(id: int) \<\<PK\>\>  
+  \--  
+  column(name: string)  
+  column(email: string) \<\<UK\>\>  
+  column(password_hash: string)  
+  column(phone: string) \<\<nullable\>\>  
+  column(user_type: enum) \<\<customer, organizer\>\>  
+  column(createdAt: datetime)  
+}
+
+entity "Raffle" as raffle {  
+  primary_key(id: int) \<\<PK\>\>  
+  \--  
+  column(name: string)  
+  column(description: text)  
+  column(image_url: string)  
+  column(start_number: int)  
+  column(end_number: int)  
+  column(price_per_number: decimal)  
+  column(sale_start_date: datetime)  
+  column(sale_end_date: datetime)  
+  column(scheduled_raffle_date: datetime)  
+  column(winning_number: int) \<\<nullable\>\>  
+  foreign_key(organizer_id: int) \<\<FK\>\>  
+  column(createdAt: datetime)  
+  column(updatedAt: datetime)  
+  foreign_key(createdBy: int) \<\<FK\>\>  
+  foreign_key(updatedBy: int) \<\<FK\>\>  
+  column(deleted_at: datetime) \<\<nullable\>\>  
+}
+
+entity "Purchase" as purchase {  
+  primary_key(id: int) \<\<PK\>\>  
+  \--  
+  foreign_key(raffle_id: int) \<\<FK\>\>  
+  foreign_key(customer_id: int) \<\<FK\>\>  
+  column(status: enum) \<\<pending, paid, expired, canceled\>\>  
+  column(total_amount: decimal)  
+  column(reservation_date: datetime)  
+  column(expiration_date: datetime)  
+  column(createdAt: datetime)  
+  column(updatedAt: datetime)  
+}
+
+entity "PurchaseDetail" as purchase_detail {  
+  primary_key(id: int) \<\<PK\>\>  
+  \--  
+  foreign_key(purchase_id: int) \<\<FK\>\>  
+  column(number: int)  
+  column(unit_price: decimal)  
+  column(createdAt: datetime)  
+}
+
+entity "Payment" as payment {  
+  primary_key(id: int) \<\<PK\>\>  
+  \--  
+  foreign_key(purchase_id: int) \<\<FK\>\>  
+  column(amount: decimal)  
+  column(payment_date: datetime)  
+  column(createdAt: datetime)  
+  foreign_key(createdBy: int) \<\<FK\>\>  
+}
+
+entity "OnlinePayment" as online_payment {  
+  primary_key(payment_id: int) \<\<PK, FK\>\>  
+  \--  
+  column(gateway_tx_id: string)  
+  column(gateway_name: string) \<\<stripe, paypal\>\>  
+  column(createdAt: datetime)  
+}
+
+entity "PaymentWithReceipt" as payment_receipt {  
+  primary_key(payment_id: int) \<\<PK, FK\>\>  
+  \--  
+  column(receipt_url: string)  
+  column(verification_status: enum) \<\<pending, approved, rejected\>\>  
+  column(verification_date: datetime) \<\<nullable\>\>  
+  foreign_key(verified_by: int) \<\<FK nullable\>\>  
+  column(createdAt: datetime)  
+}
+
+' ============================================  
+' RELATIONSHIPS  
+' ============================================
+
+user ||--o{ raffle : "organizes"  
+user ||--o{ purchase : "makes (customer)"  
+user ||--o{ payment_receipt : "verifies"  
+user ||--o{ payment : "records"
+
+raffle ||--o{ purchase : "contains_sales"
+
+purchase ||--o{ purchase_detail : "includes"  
+purchase ||--o| payment : "requires"
+
+purchase_detail |o--|| raffle : "belongs_to"
+
+payment ||--o| online_payment : "payment_method"  
+payment ||--o| payment_receipt : "payment_method"
+
+' ============================================  
+' DOMAIN EXPLANATORY NOTES  
+' ============================================
+
+note right of user  
+  **Identification and Roles**  
+    
+  • Customer: Participates by buying numbers  
+  • Organizer: Creates and manages raffles  
+    
+  Both roles can coexist in one user  
+end note
+
+note right of raffle  
+  **Raffle Definition**  
+    
+  Number range [start, end]  
+  Sale period with deadlines  
+  Scheduled date for the raffle  
+  Responsible organizer  
+end note
+
+note bottom of purchase  
+  **Temporary Number Reservation**  
+    
+  Statuses:  
+  • pending: Awaiting payment  
+  • paid: Transaction confirmed  
+  • expired: Deadline passed  
+  • canceled: Customer cancels  
+end note
+
+note right of purchase_detail  
+  **Number Lines per Purchase**  
+    
+  Each number is a separate record  
+  Audits unit price at the time  
+  of purchase  
+end note
+
+note right of payment  
+  **Transaction Record**  
+    
+  Linked to a purchase  
+  Amount and date of payment  
+  Recorded by user (audit)  
+end note
+
+note left of payment_receipt  
+  **Manual Validation**  
+    
+  Customer uploads receipt  
+  Organizer verifies and approves  
+  or rejects the payment  
+end note
+
+@enduml
+
+**COMPONENTS:**  
+@startuml Component_Diagram_Raffle_System
+
+\!theme plain  
+skinparam componentStyle uml2  
+skinparam backgroundColor \#FEFEFE
+
+title Component Diagram - Raffle Administration System
+
+' ============================================  
+' FRONTEND LAYER  
+' ============================================
+
+package "Presentation Layer" {  
+    component [Web Client\n(React SPA)] as clientApp  
+    component [Admin Web\n(React SPA)] as adminApp  
+}
+
+' ============================================  
+' BACKEND LAYER - LOGICAL COMPONENTS  
+' ============================================
+
+package "Application Layer" {  
+      
+    component [API Gateway] as gateway  
+      
+    package "Business Modules" {  
+        component [Raffles] as raffleMod  
+        component [Purchases] as purchaseMod  
+        component [Payments] as paymentMod  
+        component [Authentication] as authMod  
+    }  
+}
+
+' ============================================  
+' DATA LAYER  
+' ============================================
+
+package "Data Layer" {  
+    component [Repositories\n(Django ORM)] as orm  
+    component [Asynchronous Processor\n(Celery)] as async  
+}
+
+' ============================================  
+' INFRASTRUCTURE LAYER  
+' ============================================
+
+package "Infrastructure Layer" {  
+    database "Database" as db  
+    component [Cache/Broker] as cache  
+    storage "Storage" as storage  
+}
+
+' ============================================  
+' EXTERNAL LAYER  
+' ============================================
+
+package "External Services" {  
+    interface "Payment Gateway" as paymentAPI  
+    interface "Email Service" as emailAPI  
+}
+
+' ============================================  
+' MAIN RELATIONSHIPS  
+' ============================================
+
+' Frontend -> Gateway  
+clientApp --> gateway : REST API  
+adminApp --> gateway : REST API
+
+' Gateway -> Modules  
+gateway --> raffleMod  
+gateway --> purchaseMod  
+gateway --> paymentMod  
+gateway --> authMod
+
+' Modules -> Data Layer  
+raffleMod --> orm  
+purchaseMod --> orm  
+paymentMod --> orm  
+authMod --> orm
+
+purchaseMod --> async : Scheduled tasks
+
+' Data Layer -> Infrastructure  
+orm --> db  
+async --> cache  
+async --> db
+
+' Modules -> Infrastructure  
+paymentMod --> storage  
+raffleMod --> storage  
+gateway --> cache
+
+' Modules -> External  
+paymentMod --> paymentAPI  
+async --> emailAPI
+
+' ============================================  
+' SIMPLIFIED NOTES  
+' ============================================
+
+note right of "Business Modules"  
+  **Domain Modules**  
+    
+  They encapsulate business rules  
+  and application logic.  
+  Each module is independent  
+  and can evolve separately.  
+end note
+
+note bottom of async  
+  **Asynchronous Processing**  
+    
+  Handles tasks that do not block  
+  the main flow:  
+  • Release of expired numbers  
+  • Sending notifications to  
+    external services  
+end note
+
+@enduml
+
+**DEPLOYMENT:**  
+@startuml Deployment_Diagram_Raffle_System
+
+\!theme plain  
+skinparam backgroundColor \#FEFEFE
+
+title Deployment Diagram - Raffle Administration System
+
+' ============================================  
+' CLIENT DEVICES  
+' ============================================
+
+node "Client Device" as clientDevice \<\<device\>\> {  
+    component [Web Browser] as browser  
+}
+
+' ============================================  
+' APPLICATION SERVER (VPS/CLOUD)  
+' ============================================
+
+node "Application Server\n(VPS / Cloud Server)" as appServer \<\<server\>\> {  
+      
+    node "Docker Engine" as docker \<\<execution environment\>\> {  
+          
+        ' Web Server Container  
+        component [Nginx\n:80, :443] as nginx \<\<container\>\>  
+          
+        ' Backend Container  
+        component [Django App\n:8000] as djangoApp \<\<container\>\>  
+          
+        ' Worker Containers  
+        component [Celery Worker] as celeryWorker \<\<container\>\>  
+        component [Celery Beat] as celeryBeat \<\<container\>\>  
+          
+        ' Database Container  
+        database [PostgreSQL\n:5432] as postgres \<\<container\>\>  
+          
+        ' Cache/Broker Container  
+        component [Redis\n:6379] as redis \<\<container\>\>  
+    }  
+      
+    ' Persistent Storage  
+    storage "Docker Volumes" as volumes \<\<storage\>\> {  
+        folder [postgres_data]  
+        folder [media_files]  
+    }  
+}
+
+' ============================================  
+' EXTERNAL SERVICES  
+' ============================================
+
+cloud "Internet" as internet {  
+    component [Payment Gateway] as paymentGateway \<\<external\>\>  
+    component [SMTP Service] as emailService \<\<external\>\>  
+}
+
+' ============================================  
+' DEPLOYMENT RELATIONSHIPS  
+' ============================================
+
+' Client -> Server  
+clientDevice --> nginx : HTTPS\n(443)
+
+' Nginx -> Backend  
+nginx --> djangoApp : Proxy\n(8000)
+
+' Backend -> Database  
+djangoApp --> postgres : SQL\n(5432)
+
+' Backend -> Cache  
+djangoApp --> redis : Cache/Session\n(6379)
+
+' Backend -> Workers (task queue)  
+djangoApp --> redis : Publishes tasks
+
+' Workers -> Cache  
+celeryWorker --> redis : Consumes tasks\n(6379)  
+celeryBeat --> redis : Schedules tasks\n(6379)
+
+' Workers -> Database  
+celeryWorker --> postgres : Queries\n(5432)
+
+' Persistent storage  
+postgres --> volumes  
+djangoApp --> volumes
+
+' External services  
+djangoApp --> paymentGateway : HTTPS API  
+djangoApp --> emailService : SMTP :587
+
+' ============================================  
+' NOTES  
+' ============================================
+
+note right of docker  
+  **Container Environment**  
+    
+  All services run in  
+  isolated Docker containers,  
+  orchestrated with Docker Compose  
+    
+  Facilitates deployment and scalability  
+end note
+
+note bottom of volumes  
+  **Data Persistence**  
+    
+  Volumes ensure that  
+  critical data (DB, files)  
+  persists after restarting containers  
+end note
+
+note left of nginx  
+  **Reverse Proxy**  
+    
+  • Serves static files (React build)  
+  • Reverse proxy to Django  
+  • SSL/TLS termination  
+  • Load balancing (future)  
+end note
+
+@enduml
+
