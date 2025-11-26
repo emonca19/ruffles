@@ -3,7 +3,7 @@ from typing import Any, ClassVar
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import permissions, status, viewsets
+from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -12,23 +12,18 @@ from .serializers import ReservationSerializer
 from .services import create_reservation
 
 
-class PurchaseViewSet(viewsets.ModelViewSet):
+@extend_schema(
+    tags=["Purchases"],
+    summary="Create a new reservation",
+    description="Allows authenticated users or guests to reserve numbers for a raffle.",
+    request=ReservationSerializer,
+    responses={201: ReservationSerializer},  # Todo: Update response schema
+)
+class PurchaseViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Purchase.objects.all()
-    # We'll use a basic serializer for reading, but for now let's just use ReservationSerializer for write
-    # In reality you'd want a ReadSerializer.
     serializer_class = ReservationSerializer
     permission_classes: ClassVar[list[Any]] = [permissions.AllowAny]  # Allow guests
 
-    def get_serializer_class(self) -> type[ReservationSerializer]:
-        if self.action == "create":
-            return ReservationSerializer
-        # Fallback or Read Serializer
-        return ReservationSerializer
-
-    @extend_schema(
-        request=ReservationSerializer,
-        responses={201: ReservationSerializer},  # Todo: Update response schema
-    )
     def create(self, request: Request, *args: object, **kwargs: object) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
