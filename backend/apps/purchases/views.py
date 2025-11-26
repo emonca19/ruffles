@@ -30,9 +30,9 @@ class PurchaseViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
         data = serializer.validated_data
         guest_info = {
-            "guest_name": data.get("guest_name"),
-            "guest_phone": data.get("guest_phone"),
-            "guest_email": data.get("guest_email"),
+            "guest_name": data.get("guest_name", ""),
+            "guest_phone": data.get("guest_phone", ""),
+            "guest_email": data.get("guest_email", ""),
         }
 
         try:

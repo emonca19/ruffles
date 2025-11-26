@@ -15,7 +15,10 @@ class ReservationSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
         min_length=10,
-        validators=[RegexValidator(r"^[0-9+().\-\s]*$", "Enter a valid phone number.")],
+        max_length=10,
+        validators=[
+            RegexValidator(r"^\d{10}$", "Enter a valid 10-digit phone number.")
+        ],
     )
     guest_email = serializers.EmailField(required=False, allow_blank=True)
 
@@ -29,3 +32,8 @@ class ReservationSerializer(serializers.Serializer):
             )
 
         return attrs
+
+    def validate_numbers(self, value: list[int]) -> list[int]:
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Duplicate numbers are not allowed.")
+        return value
