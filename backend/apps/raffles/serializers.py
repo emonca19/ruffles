@@ -140,9 +140,9 @@ class RaffleNumberStatusSerializer(serializers.Serializer):
 
 class RaffleAvailabilitySerializer(serializers.Serializer):
     raffle_id = serializers.IntegerField()
-    range_start = serializers.IntegerField()
-    range_end = serializers.IntegerField()
-    total_numbers = serializers.IntegerField()
-    summary = serializers.DictField(child=serializers.IntegerField())
-    numbers = RaffleNumberStatusSerializer(many=True)
+    taken_numbers = serializers.SerializerMethodField()
+
+    def get_taken_numbers(self, obj):
+        # obj.numbers es una lista de RaffleNumberStatus
+        return [n.number for n in obj.numbers if n.status != "available"]
     

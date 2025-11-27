@@ -45,7 +45,13 @@ def get_raffle_availability(raffle: Raffle) -> RaffleAvailability:
 
     for purchase in related_purchases:
         customer = purchase.customer
-        customer_name = getattr(customer, "name", None) or customer.email
+
+        if customer:
+            # Usuario registrado
+            customer_name = getattr(customer, "name", None) or customer.email
+        else:
+            # Compra como invitado (guest)
+            customer_name = getattr(purchase, "guest_name", None) or getattr(purchase, "guest_email", "")
         current_status = (
             "paid" if purchase.status == Purchase.Status.PAID else "reserved"
         )
