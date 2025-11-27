@@ -7,6 +7,7 @@ import Login from './LoginAdmin.jsx';
 import PublicLayout from './PublicLayout.jsx';
 import RegistroUsuario from './RegistroAdmin.jsx';
 import RuffleDetail from './RuffleDetail.jsx';
+import ParticipacionSorteos from './ParticipacionSorteos.jsx';
 import '../CSS/Global.css';
 
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/contacto" element={<GaleriaSorteos />} />
         <Route path="/detalle/:id" element={<RuffleDetail />} />
         <Route path="/registroUsuario" element={<RegistroUsuario />} />
+        <Route path="/participacion" element={<ParticipacionSorteos />} />
         </Route>
 
         

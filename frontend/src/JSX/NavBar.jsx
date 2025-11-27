@@ -23,6 +23,7 @@ export default function Navbar() {
       <ul className="navbar-links">
         <li><Link to="/inicio">Inicio</Link></li>
         <li><Link to="/rifas">Rifas</Link></li>
+        <li><Link to="/participacion">Participacion</Link></li>
         {esOrganizador && (
           <li><Link to="/registro">Crear Sorteo</Link></li>
         )}
