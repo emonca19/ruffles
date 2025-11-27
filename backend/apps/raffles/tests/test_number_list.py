@@ -4,13 +4,14 @@ from decimal import Decimal
 from typing import Any
 
 from django.urls import reverse
+
 import pytest
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from apps.raffles.models import Raffle
 from apps.purchases.models import Purchase, PurchaseDetail
+from apps.raffles.models import Raffle
 
 
 @pytest.mark.django_db
@@ -20,7 +21,9 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_all_numbers_available(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_all_numbers_available(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         organizer = user_factory()
         raffle = Raffle.objects.create(
             name="A",
@@ -39,16 +42,12 @@ class TestRaffleAvailability:
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
         assert data["raffle_id"] == raffle.pk
-        assert data["range_start"] == 1
-        assert data["range_end"] == 5
-        assert data["total_numbers"] == 5
-        assert data["summary"]["available"] == 5
-        assert data["summary"]["reserved"] == 0
-        assert data["summary"]["paid"] == 0
-        assert len(data["numbers"]) == 5
-        assert all(n["status"] == "available" for n in data["numbers"])
+        assert data["raffle_id"] == raffle.pk
+        assert data["taken_numbers"] == []
 
-    def test_numbers_reflect_purchases(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_numbers_reflect_purchases(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         organizer = user_factory()
         customer = user_factory(email="buyer@example.com")
         raffle = Raffle.objects.create(
@@ -90,17 +89,11 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        assert data["summary"]["available"] == 2
-        assert data["summary"]["reserved"] == 2
-        assert data["summary"]["paid"] == 1
-        status_by_num = {entry["number"]: entry for entry in data["numbers"]}
-        assert status_by_num[1]["status"] == "available"
-        assert status_by_num[2]["status"] == "reserved"
-        assert status_by_num[3]["status"] == "paid"
-        assert status_by_num[4]["status"] == "reserved"
-        assert status_by_num[5]["status"] == "available"
+        assert data["taken_numbers"] == [2, 3, 4]
 
-    def test_includes_purchase_metadata(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_includes_purchase_metadata(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         """Paid/reserved entries include `purchase_id` and `customer_name`."""
         organizer = user_factory()
         customer = user_factory(email="meta@example.com", name="Meta Buyer")
@@ -136,15 +129,12 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        by_num = {e["number"]: e for e in data["numbers"]}
-        assert by_num[1]["status"] == "reserved"
-        assert by_num[1]["purchase_id"] == p1.id
-        assert by_num[1]["customer_name"] == "Meta Buyer"
-        assert by_num[2]["status"] == "paid"
-        assert by_num[2]["purchase_id"] == p2.id
-        assert by_num[2]["customer_name"] == "Meta Buyer"
+        assert 1 in data["taken_numbers"]
+        assert 2 in data["taken_numbers"]
 
-    def test_paid_overrides_reserved(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_paid_overrides_reserved(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         """If a number is reserved then later paid, the availability shows paid."""
         organizer = user_factory()
         customer = user_factory(email="buyer2@example.com", name="Buyer Two")
@@ -179,11 +169,11 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        by_num = {e["number"]: e for e in data["numbers"]}
-        assert by_num[2]["status"] == "paid"
-        assert by_num[2]["purchase_id"] == p2.id
+        assert 2 in data["taken_numbers"]
 
-    def test_customer_name_falls_back_to_email(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_customer_name_falls_back_to_email(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         """If customer.name is missing, availability returns email as customer_name."""
         organizer = user_factory()
         customer = user_factory(email="no_name@example.com")
@@ -213,10 +203,11 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        by_num = {e["number"]: e for e in data["numbers"]}
-        assert by_num[1]["customer_name"] == "no_name@example.com"
+        assert 1 in data["taken_numbers"]
 
-    def test_numbers_are_ordered_and_available_have_null_purchase(self, user_factory: Any, api_client: APIClient) -> None:
+    def test_numbers_are_ordered_and_available_have_null_purchase(
+        self, user_factory: Any, api_client: APIClient
+    ) -> None:
         organizer = user_factory()
         raffle = Raffle.objects.create(
             name="F",
@@ -234,9 +225,4 @@ class TestRaffleAvailability:
         resp: Response = api_client.get(url)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        numbers = data["numbers"]
-        nums = [n["number"] for n in numbers]
-        assert nums == sorted(nums)
-        for entry in numbers:
-            assert entry["status"] == "available"
-            assert entry.get("purchase_id") is None
+        assert data["taken_numbers"] == []

@@ -67,7 +67,7 @@ class TestRaffleAPI:
         Raffle.objects.create(
             name="iPhone 15",
             price_per_number=100,
-            image_url="https://test.com/img.jpg",
+            image="img.jpg",
             number_start=1,
             number_end=100,
             sale_start_at="2025-01-01T00:00:00Z",
@@ -78,7 +78,7 @@ class TestRaffleAPI:
         response: Response = self.client.get(reverse("raffle-list"))
         card: dict[str, Any] = response.data["results"][0]
         assert card["name"] == "iPhone 15"
-        assert card["image_url"] == "https://test.com/img.jpg"
+        assert card["image"].endswith("img.jpg")
         value = card["price_per_number"]
         assert value in ("100.00", 100)
 
@@ -202,7 +202,7 @@ class TestRaffleAPI:
         """Si la URL de la imagen está mal, la clave image_url debe seguir presente."""
         Raffle.objects.create(
             name="RC",
-            image_url="https://badurl.com/img.jpg",
+            image="broken.jpg",
             number_start=1,
             number_end=100,
             price_per_number=20,
@@ -213,7 +213,7 @@ class TestRaffleAPI:
         )
         response: Response = self.client.get(reverse("raffle-list"))
         card: dict[str, Any] = response.data["results"][0]
-        assert "image_url" in card
+        assert "image" in card
 
     # Price format verification
     def test_price_format(self, organizer_user: Any) -> None:
