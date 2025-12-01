@@ -1,8 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django.core.validators import RegexValidator
 
 from rest_framework import serializers
+
+from .models import Purchase, PurchaseDetail
 
 
 class ReservationSerializer(serializers.Serializer):
@@ -23,7 +25,9 @@ class ReservationSerializer(serializers.Serializer):
     guest_email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        user = self.context.get("request").user
+        request = self.context.get("request")
+        assert request is not None, "Request is required in context"
+        user = request.user
 
         # If user is not authenticated, guest_phone is required
         if not user.is_authenticated and not attrs.get("guest_phone"):
@@ -37,3 +41,43 @@ class ReservationSerializer(serializers.Serializer):
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Duplicate numbers are not allowed.")
         return value
+
+
+class PurchaseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseDetail
+        fields: ClassVar[list[str]] = ["number", "unit_price"]
+
+
+class PurchaseReadSerializer(serializers.ModelSerializer):
+    raffle_name = serializers.CharField(source="raffle.name", read_only=True)
+    raffle_status = serializers.SerializerMethodField()
+    draw_scheduled_at = serializers.DateTimeField(
+        source="raffle.draw_scheduled_at", read_only=True
+    )
+    details = PurchaseDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Purchase
+        fields: ClassVar[list[str]] = [
+            "id",
+            "raffle_id",
+            "raffle_name",
+            "raffle_status",
+            "draw_scheduled_at",
+            "status",
+            "total_amount",
+            "reserved_at",
+            "expires_at",
+            "details",
+            "guest_name",
+            "guest_phone",
+        ]
+
+    def get_raffle_status(self, obj: Purchase) -> str:
+        # Simple status derivation for the UI
+        if obj.raffle.winner_number:
+            return "completed"
+        if obj.raffle.is_on_sale:
+            return "selling"
+        return "closed"

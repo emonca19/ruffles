@@ -40,12 +40,12 @@ services:
     environment:
       DEBUG: ${DEBUG:-True}
       ENVIRONMENT: ${ENVIRONMENT:-development}
-      DB_HOST: postgres
+      DB_HOST: ruffles_postgres
       DB_NAME: ${DB_NAME:-ruffles_db}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_PORT: 5432
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://ruffles_redis:6379/0
       DJANGO_SETTINGS_MODULE: config.settings.local
       PYTHONPATH: /app:/app/apps
     depends_on:
@@ -56,7 +56,7 @@ services:
     volumes:
       - ./backend:/app
       - ./media:/app/media
-      
+
   # Uncomment when Celery is configured
   # celery:
   #   build: ./backend
