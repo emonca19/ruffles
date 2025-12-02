@@ -13,6 +13,21 @@ jobs:
       run:
         working-directory: ./backend
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
 
@@ -36,6 +51,13 @@ jobs:
     #   run: mypy .
 
     - name: Run tests
+      env:
+        DB_ENGINE: django.db.backends.postgresql
+        DB_NAME: postgres
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        DB_HOST: 127.0.0.1
+        DB_PORT: 5433
       run: pytest
 
   frontend:
