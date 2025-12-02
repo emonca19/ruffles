@@ -54,6 +54,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
     draw_scheduled_at = serializers.DateTimeField(
         source="raffle.draw_scheduled_at", read_only=True
     )
+    raffle_image = serializers.ImageField(source="raffle.image", read_only=True)
     details = PurchaseDetailSerializer(many=True, read_only=True)
 
     class Meta:
@@ -71,6 +72,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
             "details",
             "guest_name",
             "guest_phone",
+            "raffle_image",
         ]
 
     def get_raffle_status(self, obj: Purchase) -> str:

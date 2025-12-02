@@ -69,6 +69,7 @@ class TestPersonalPanel:
         assert len(response.data) == 1
         assert response.data[0]["id"] == guest_purchase.id
         assert response.data[0]["status"] == "pending"
+        assert "raffle_image" in response.data[0]
 
     def test_guest_list_purchases_no_phone_error(self, api_client):
         """Missing phone param returns 400 for unauthenticated user."""
