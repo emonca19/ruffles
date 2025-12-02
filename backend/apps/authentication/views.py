@@ -4,11 +4,11 @@ from typing import cast
 
 from django.contrib.auth import get_user_model
 
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema
 
 from .serializers import RegistrationSerializer, UserSerializer
 

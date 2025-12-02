@@ -110,10 +110,10 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
                 )
             try:
                 winner_val = int(winner_raw)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as exc:
                 raise serializers.ValidationError(
                     {"winner_number": "Invalid winner_number format."}
-                )
+                ) from exc
             if not (ns <= winner_val <= ne):
                 raise serializers.ValidationError(
                     {
@@ -133,7 +133,7 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
         try:
             raffle.full_clean()
         except DjangoValidationError as exc:
-            raise serializers.ValidationError(exc.message_dict)
+            raise serializers.ValidationError(exc.message_dict) from exc
         raffle.save()
         return raffle
 
