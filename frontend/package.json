@@ -21,6 +21,7 @@
     "test:sorteo:coverage": "vitest run src/service/crearSorteo.test.jsx --coverage",
     "test:tabla-numeros": "vitest run src/service/TablaNumeros.test.jsx --reporter=verbose",
     "test:tabla-numeros:report": "vitest run src/service/tablaNumeros.test.jsx --reporter=junit --outputFile=./test-results/tabla-numeros.xml",
+    "test:panel_personal":"vitest run src/service/panel_personal.test.jsx",
     "test:all": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
