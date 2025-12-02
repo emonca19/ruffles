@@ -24,6 +24,7 @@ function App() {
         <Route path="/detalle/:id" element={<RuffleDetail />} />
         <Route path="/registroUsuario" element={<RegistroUsuario />} />
         <Route path="/participacion" element={<ParticipacionSorteos />} />
+        <Route path="/galeria" element={<GaleriaSorteos />} />
         </Route>
 
         
