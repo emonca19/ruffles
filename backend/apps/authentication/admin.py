@@ -26,7 +26,14 @@ class UserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
     readonly_fields = ("date_joined", "updated_at", "last_login")
 
-    list_display = ("email", "name", "user_type", "is_active", "is_staff", "date_joined")
+    list_display = (
+        "email",
+        "name",
+        "user_type",
+        "is_active",
+        "is_staff",
+        "date_joined",
+    )
     list_filter = ("user_type", "is_active", "is_staff", "is_superuser")
     search_fields = ("email", "name", "phone")
     ordering = ("-date_joined",)
@@ -54,7 +61,14 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "name", "phone", "user_type", "password1", "password2"),
+                "fields": (
+                    "email",
+                    "name",
+                    "phone",
+                    "user_type",
+                    "password1",
+                    "password2",
+                ),
             },
         ),
     )

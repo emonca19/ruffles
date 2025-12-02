@@ -84,10 +84,9 @@ def user_factory(db):
 @pytest.fixture
 def organizer_user(db, user_factory):
     import uuid
+
     unique_email = f"organizer-{uuid.uuid4().hex[:8]}@example.com"
-    return user_factory(
-        email=unique_email, password="OrgPass123", name="Organizer"
-    )
+    return user_factory(email=unique_email, password="OrgPass123", name="Organizer")
 
 
 @pytest.fixture

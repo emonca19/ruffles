@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.urls import reverse
+
 import pytest
 from rest_framework import status
 from rest_framework.response import Response
@@ -20,7 +21,9 @@ class TestCreateRaffle:
         resp: Response = api_client.post(url, payload, format="json")
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_create_minimal_valid_raffle(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_create_minimal_valid_raffle(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """Create a minimal valid raffle (201) and ensure organizer/created_by are assigned."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
@@ -42,14 +45,19 @@ class TestCreateRaffle:
         assert r.organizer_id == organizer_user.id
         assert r.created_by_id == organizer_user.id
 
-    def test_create_missing_required_fields_returns_400(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_create_missing_required_fields_returns_400(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """Missing required fields should return 400 with error details."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
         payload = {"name": "Bad"}
         resp: Response = client.post(url, payload, format="json")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert any(k in resp.data for k in ("number_start", "number_end", "price_per_number", "sale_start_at"))
+        assert any(
+            k in resp.data
+            for k in ("number_start", "number_end", "price_per_number", "sale_start_at")
+        )
 
     def test_creator_is_request_user(self, api_client_with_token, user_factory) -> None:
         """If the payload contains another user, the organizer must be the authenticated user."""
@@ -75,7 +83,9 @@ class TestCreateRaffle:
         assert r.organizer_id == client_user.id
         assert r.created_by_id == client_user.id
 
-    def test_validation_error_number_range(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_validation_error_number_range(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """number_start >= number_end should produce a validation error (400)."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
@@ -92,7 +102,9 @@ class TestCreateRaffle:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "number_end" in resp.data
 
-    def test_price_must_be_non_negative(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_price_must_be_non_negative(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """Negative price_per_number should return 400 and include an error for price_per_number."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
@@ -109,7 +121,9 @@ class TestCreateRaffle:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "price_per_number" in resp.data
 
-    def test_sale_window_validation(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_sale_window_validation(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """sale_start_at >= sale_end_at should return 400 with error on sale_end_at."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
@@ -126,7 +140,9 @@ class TestCreateRaffle:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "sale_end_at" in resp.data
 
-    def test_draw_must_be_after_sale_end(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_draw_must_be_after_sale_end(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """draw_scheduled_at must be after sale_end_at; otherwise return 400 with error on draw_scheduled_at."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
@@ -143,7 +159,9 @@ class TestCreateRaffle:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "draw_scheduled_at" in resp.data
 
-    def test_winner_number_out_of_range_returns_400(self, organizer_user: Any, api_client_with_token) -> None:
+    def test_winner_number_out_of_range_returns_400(
+        self, organizer_user: Any, api_client_with_token
+    ) -> None:
         """If winner_number is provided and out of the configured range, return 400 with error on winner_number."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")

@@ -5,12 +5,12 @@ from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema
 
 from .models import Raffle
 from .serializers import (
@@ -68,9 +68,10 @@ class RafflePagination(PageNumberPagination):
     max_page_size = 60
 
 class RaffleDetailView(generics.RetrieveAPIView):
-    queryset = Raffle.objects.filter(deleted_at__isnull=True)
+    def get_queryset(self) -> QuerySet[Raffle]:
+        return Raffle.objects.filter(deleted_at__isnull=True)
     serializer_class = PublicRaffleSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = (permissions.AllowAny,)
 
 
 @extend_schema(
@@ -118,7 +119,7 @@ class RaffleAvailabilityView(generics.RetrieveAPIView):
     serializer_class = RaffleAvailabilitySerializer
     permission_classes = (permissions.AllowAny,)
 
-    def get_object(self):
+    def get_object(self) -> dict:
         raffle = get_object_or_404(Raffle.objects.active(), pk=self.kwargs["pk"])
         return get_raffle_availability(raffle)
 
@@ -158,10 +159,11 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
 
         return queryset
 
-    def get_serializer_class(self):  # type: ignore[override]
+    def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.request.method == "POST":
             return OrganizerRaffleWriteSerializer
         return super().get_serializer_class()
+
     def perform_create(self, serializer: OrganizerRaffleWriteSerializer) -> None:
         serializer.save()
 
@@ -176,4 +178,6 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
             write_serializer.instance, context=self.get_serializer_context()
         )
         headers = self.get_success_headers(read_serializer.data)
-        return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            read_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )

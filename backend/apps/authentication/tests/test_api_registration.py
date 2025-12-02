@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -12,7 +14,7 @@ from rest_framework.test import APIClient
 pytestmark = pytest.mark.django_db
 
 
-def test_registration_success_returns_tokens_and_user(api_client: APIClient):
+def test_registration_success_returns_tokens_and_user(api_client: APIClient) -> None:
     """Verifica el flujo feliz de registro.
 
     - Envía un POST a la ruta nombrada "auth-register" con JSON.
@@ -46,7 +48,9 @@ def test_registration_success_returns_tokens_and_user(api_client: APIClient):
     assert "password" not in resp.data["user"]
 
 
-def test_registration_duplicate_email_case_insensitive(api_client: APIClient, user_factory):
+def test_registration_duplicate_email_case_insensitive(
+    api_client: APIClient, user_factory
+) -> None:
     """El registro debe fallar si el email ya existe, sin importar mayúsculas/minúsculas.
 
     - Creamos un usuario con `user_factory` (fixture de fábrica).
@@ -69,7 +73,9 @@ def test_registration_duplicate_email_case_insensitive(api_client: APIClient, us
         ({}, None),
     ],
 )
-def test_registration_missing_fields(api_client: APIClient, payload: dict, missing_field: str | None):
+def test_registration_missing_fields(
+    api_client: APIClient, payload: dict, missing_field: str | None
+) -> None:
     """Parametriza distintos payloads con campos faltantes.
 
     - `pytest.mark.parametrize` permite ejecutar el mismo test con varios inputs.
@@ -89,7 +95,7 @@ def test_registration_missing_fields(api_client: APIClient, payload: dict, missi
     "email",
     ["plainaddress", "@missinguser.com", "john@", "john@.com", "john.com"],
 )
-def test_registration_invalid_email(api_client: APIClient, email: str):
+def test_registration_invalid_email(api_client: APIClient, email: str) -> None:
     """Valida varios formatos de email inválidos.
 
     - El parametrize ejecuta este test para cada email inválido.
@@ -102,7 +108,7 @@ def test_registration_invalid_email(api_client: APIClient, email: str):
 
 
 @pytest.mark.parametrize("password", ["short", "1234567"])
-def test_registration_password_too_short(api_client: APIClient, password: str):
+def test_registration_password_too_short(api_client: APIClient, password: str) -> None:
     """Comprueba que contraseñas demasiado cortas sean rechazadas.
 
     - `parametrize` cubre varios ejemplos de passwords inválidos.
@@ -114,7 +120,9 @@ def test_registration_password_too_short(api_client: APIClient, password: str):
     assert "password" in resp.data
 
 
-def test_registration_rejects_admin_flags_and_does_not_escalate_privileges(api_client: APIClient):
+def test_registration_rejects_admin_flags_and_does_not_escalate_privileges(
+    api_client: APIClient,
+) -> None:
     """Asegura que los flags administrativos enviados por el cliente no escalen privilegios.
 
     - Si el endpoint rechaza campos administrativos, puede devolver 400.
@@ -130,12 +138,16 @@ def test_registration_rejects_admin_flags_and_does_not_escalate_privileges(api_c
     resp = api_client.post(reverse("auth-register"), data, format="json")
     User = get_user_model()
     # Comprobamos en la base de datos que no se elevó a superuser
-    elevated = User.objects.filter(email="eviladmin@example.com", is_superuser=True).exists()
+    elevated = User.objects.filter(
+        email="eviladmin@example.com", is_superuser=True
+    ).exists()
     assert resp.status_code in (status.HTTP_400_BAD_REQUEST, status.HTTP_201_CREATED)
     assert not elevated
 
 
-def test_registration_cannot_create_organizer_without_auth(api_client: APIClient):
+def test_registration_cannot_create_organizer_without_auth(
+    api_client: APIClient,
+) -> None:
     """Verifica que no se pueda crear un usuario con rol 'organizer' sin autorización.
 
     - Dependiendo de la implementación, el error puede estar en 'user_type' o en 'non_field_errors'.
@@ -151,7 +163,7 @@ def test_registration_cannot_create_organizer_without_auth(api_client: APIClient
     assert "user_type" in resp.data or "non_field_errors" in resp.data
 
 
-def test_registration_accepts_optional_phone(api_client: APIClient):
+def test_registration_accepts_optional_phone(api_client: APIClient) -> None:
     """Comprueba que el campo opcional `phone` se acepta y se devuelve en el user.
 
     - No valida el formato del teléfono aquí; solo revisa que se guarde y se devuelva.

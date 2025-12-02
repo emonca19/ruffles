@@ -36,7 +36,9 @@ class UserManager(BaseUserManager["User"]):
         options.update(extra_fields)
         return self._create_user(email, password, **options)
 
-    def create_superuser(self, email: str, password: str, **extra_fields: object) -> User:
+    def create_superuser(
+        self, email: str, password: str, **extra_fields: object
+    ) -> User:
         options: dict[str, object] = {
             "is_staff": True,
             "is_superuser": True,

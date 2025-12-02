@@ -26,4 +26,14 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['**/*.test.jsx', '**/*.test.js'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+        global: 'writable',
+      },
+    },
+  },
 ])

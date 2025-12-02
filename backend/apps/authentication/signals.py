@@ -25,7 +25,10 @@ def ensure_default_organizer(sender: type[AppConfig], **kwargs: object) -> None:
 
     email = getattr(settings, "DEFAULT_ORGANIZER_EMAIL", "").strip()
     password = getattr(settings, "DEFAULT_ORGANIZER_PASSWORD", "").strip()
-    name = getattr(settings, "DEFAULT_ORGANIZER_NAME", "Lead Organizer").strip() or "Lead Organizer"
+    name = (
+        getattr(settings, "DEFAULT_ORGANIZER_NAME", "Lead Organizer").strip()
+        or "Lead Organizer"
+    )
 
     if not email or not password:
         logger.debug("Skipping default organizer creation; credentials not configured.")
