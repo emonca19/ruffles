@@ -186,7 +186,7 @@ class PaymentWithReceipt(models.Model):
     payment = models.OneToOneField(
         Payment, on_delete=models.CASCADE, primary_key=True, related_name="receipt"
     )
-    receipt_url = models.URLField()
+    receipt_image = models.ImageField(upload_to="receipts/", null=True, blank=True)
     verification_status = models.CharField(
         max_length=16,
         choices=VerificationStatus.choices,

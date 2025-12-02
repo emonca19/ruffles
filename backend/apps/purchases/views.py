@@ -4,12 +4,17 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import QuerySet
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import mixins, permissions, serializers, status, viewsets
+from rest_framework import mixins, parsers, permissions, serializers, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import Purchase
-from .serializers import PurchaseReadSerializer, ReservationSerializer
+from .serializers import (
+    PaymentReceiptSerializer,
+    PurchaseReadSerializer,
+    ReservationSerializer,
+)
 from .services import create_reservation
 
 
@@ -29,6 +34,8 @@ class PurchaseViewSet(
     pagination_class = None
 
     def get_serializer_class(self) -> type[serializers.Serializer]:
+        if self.action == "upload_receipt":
+            return PaymentReceiptSerializer
         if self.action in ["list", "retrieve"]:
             return PurchaseReadSerializer
         return ReservationSerializer
@@ -101,6 +108,56 @@ class PurchaseViewSet(
         except DjangoValidationError as e:
             return Response({"detail": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Return the ReadSerializer representation
         read_serializer = PurchaseReadSerializer(purchase)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["Purchases"],
+        summary="Upload payment receipt",
+        description="Upload a receipt image for a purchase. Guests must provide 'phone'.",
+        request=PaymentReceiptSerializer,
+        responses={201: None},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        serializer_class=PaymentReceiptSerializer,
+        parser_classes=[parsers.MultiPartParser],
+        url_path="upload_receipt",
+    )
+    def upload_receipt(self, request: Request, pk: int | None = None) -> Response:
+        from django.shortcuts import get_object_or_404
+
+        from rest_framework.exceptions import PermissionDenied
+
+        purchase = get_object_or_404(Purchase, pk=pk)
+        user = request.user
+        phone = request.data.get("phone")
+
+        # Permission check
+        if user.is_authenticated:
+            if purchase.customer != user:
+                raise PermissionDenied(
+                    "You do not have permission to upload a receipt for this purchase."
+                )
+        else:
+            if not phone or purchase.guest_phone != phone:
+                raise PermissionDenied("Invalid phone number for this reservation.")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        from .models import Payment, PaymentWithReceipt
+
+        # Create Payment and Receipt
+        payment = Payment.objects.create(
+            purchase=purchase,
+            amount=purchase.total_amount,
+            created_by=user if user.is_authenticated else None,
+        )
+        PaymentWithReceipt.objects.create(
+            payment=payment,
+            receipt_image=serializer.validated_data["receipt_image"],
+        )
+
+        return Response(status=status.HTTP_201_CREATED)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -63,7 +63,7 @@ def create_reservation(
         )
 
         if user.is_authenticated:
-            purchase.customer = user
+            purchase.customer = cast("User", user)
         else:
             purchase.guest_name = guest_info.get("guest_name", "")
             purchase.guest_phone = guest_info.get("guest_phone", "")

@@ -4,7 +4,7 @@ from django.core.validators import RegexValidator
 
 from rest_framework import serializers
 
-from .models import Purchase, PurchaseDetail
+from .models import PaymentWithReceipt, Purchase, PurchaseDetail
 
 
 class ReservationSerializer(serializers.Serializer):
@@ -26,11 +26,10 @@ class ReservationSerializer(serializers.Serializer):
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         request = self.context.get("request")
-        assert request is not None, "Request is required in context"
-        user = request.user
+        is_authenticated = request.user.is_authenticated if request else False
 
         # If user is not authenticated, guest_phone is required
-        if not user.is_authenticated and not attrs.get("guest_phone"):
+        if not is_authenticated and not attrs.get("guest_phone"):
             raise serializers.ValidationError(
                 {"guest_phone": "Guest phone number is required for guest purchases."}
             )
@@ -81,3 +80,12 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
         if obj.raffle.is_on_sale:
             return "selling"
         return "closed"
+
+
+class PaymentReceiptSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(required=False, write_only=True)
+
+    class Meta:
+        model = PaymentWithReceipt
+        fields: ClassVar[list[str]] = ["receipt_image", "phone"]
+        extra_kwargs: ClassVar[dict[str, Any]] = {"receipt_image": {"required": True}}
