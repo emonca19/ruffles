@@ -34,7 +34,9 @@ class TestRafflesListEndpoint:
         assert len(data) == 0
 
     @patch("apps.raffles.views.RaffleViewSet.get_queryset")
-    def test_database_error_returns_500(self, mock_queryset: MagicMock, client: APIClient) -> None:  # type: ignore[misc]
+    def test_database_error_returns_500(
+        self, mock_queryset: MagicMock, client: APIClient
+    ) -> None:  # type: ignore[misc]
         """Manejar error de base de datos"""
         mock_queryset.side_effect = DatabaseError("Database error")
         response = client.get("/api/v1/raffles/")

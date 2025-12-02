@@ -153,15 +153,15 @@ export default function RegistroSorteo() {
       <h2>Registrar Nuevo Sorteo</h2>
 
       <form onSubmit={handleSubmit} className="registro-sorteo-form">
-        
-        <label>Nombre del sorteo</label>
-        <input type="text" name="name" value={formData.name} onChange={handleChange} required />
 
-        <label>Descripción</label>
-        <textarea name="description" value={formData.description} onChange={handleChange} required />
+        <label htmlFor="name">Nombre del sorteo</label>
+        <input id="name" type="text" name="name" value={formData.name} onChange={handleChange} required />
+
+        <label htmlFor="description">Descripción</label>
+        <textarea id="description" name="description" value={formData.description} onChange={handleChange} required />
 
         {/* DRAG AND DROP + INPUT */}
-        <label>Imagen del sorteo</label>
+        <label htmlFor="image">Imagen del sorteo</label>
         <div
           className={`dropzone ${isDragging ? "dragging" : ""}`}
           onClick={() => fileInputRef.current.click()}
@@ -176,6 +176,7 @@ export default function RegistroSorteo() {
           )}
 
           <input
+            id="image"
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -184,20 +185,20 @@ export default function RegistroSorteo() {
           />
         </div>
 
-        <label>Total de números</label>
-        <input type="number" name="number_end" value={formData.number_end} onChange={handleChange} min="1" required />
+        <label htmlFor="number_end">Total de números</label>
+        <input id="number_end" type="number" name="number_end" value={formData.number_end} onChange={handleChange} min="1" required />
 
-        <label>Precio por número</label>
-        <input type="number" name="price_per_number" value={formData.price_per_number} onChange={handleChange} step="0.01" min="1" required />
+        <label htmlFor="price_per_number">Precio por número</label>
+        <input id="price_per_number" type="number" name="price_per_number" value={formData.price_per_number} onChange={handleChange} step="0.01" min="1" required />
 
-        <label>Inicio de venta</label>
-        <input type="date" name="sale_start_at" value={formData.sale_start_at} onChange={handleChange} required />
+        <label htmlFor="sale_start_at">Inicio de venta</label>
+        <input id="sale_start_at" type="date" name="sale_start_at" value={formData.sale_start_at} onChange={handleChange} required />
 
-        <label>Fin de venta</label>
-        <input type="date" name="sale_end_at" value={formData.sale_end_at} onChange={handleChange} required />
+        <label htmlFor="sale_end_at">Fin de venta</label>
+        <input id="sale_end_at" type="date" name="sale_end_at" value={formData.sale_end_at} onChange={handleChange} required />
 
-        <label>Fecha del sorteo</label>
-        <input type="date" name="draw_scheduled_at" value={formData.draw_scheduled_at} onChange={handleChange} required />
+        <label htmlFor="draw_scheduled_at">Fecha del sorteo</label>
+        <input id="draw_scheduled_at" type="date" name="draw_scheduled_at" value={formData.draw_scheduled_at} onChange={handleChange} required />
 
         <button type="submit" className="registro-btn">Registrar Sorteo</button>
       </form>

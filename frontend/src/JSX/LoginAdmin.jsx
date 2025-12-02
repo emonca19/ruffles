@@ -101,7 +101,7 @@ export default function Login() {
               id="email"
               name="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
               placeholder="admin@iglesia.com"
               required
               disabled={isLoading}
@@ -116,7 +116,7 @@ export default function Login() {
               id="password"
               name="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
               placeholder="••••••••"
               required
               disabled={isLoading}

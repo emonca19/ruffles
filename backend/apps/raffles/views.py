@@ -67,9 +67,11 @@ class RafflePagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 60
 
+
 class RaffleDetailView(generics.RetrieveAPIView):
     def get_queryset(self) -> QuerySet[Raffle]:
         return Raffle.objects.filter(deleted_at__isnull=True)
+
     serializer_class = PublicRaffleSerializer
     permission_classes = (permissions.AllowAny,)
 

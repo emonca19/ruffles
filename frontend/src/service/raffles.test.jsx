@@ -1,17 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+// import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import GaleriaSorteos from '../JSX/GaleriaSorteos';
 
 // Mock de TarjetaSorteo
 vi.mock('../JSX/TarjetaSorteo', () => ({
-  default: vi.fn(({ sorteo, esOrganizador }) => (
+  default: vi.fn(({ sorteo }) => (
     <div data-testid={`sorteo-card-${sorteo.id}`} className="sorteo-card">
       <h3>{sorteo.name}</h3>
       <img src={sorteo.image_url} alt={sorteo.name} />
       <p>Precio por número: ${sorteo.price_per_number}</p>
-      <span data-testid="modo-vista">{esOrganizador ? 'Organizador' : 'Visitante'}</span>
     </div>
   ))
 }));
@@ -24,34 +23,69 @@ const RouterWrapper = ({ children }) => (
 );
 
 describe('Pruebas Automáticas - Galería de Sorteos', () => {
-  let user;
+  // let user;
+  const mockFetch = vi.fn();
+
+  // Mock localStorage
+  const localStorageMock = (function () {
+    let store = {};
+    return {
+      getItem: vi.fn((key) => store[key] || null),
+      setItem: vi.fn((key, value) => {
+        store[key] = value.toString();
+      }),
+      removeItem: vi.fn((key) => {
+        delete store[key];
+      }),
+      clear: vi.fn(() => {
+        store = {};
+      })
+    };
+  })();
 
   beforeEach(() => {
-    user = userEvent.setup();
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // user = userEvent.setup();
+    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'log').mockImplementation(() => { });
+    global.fetch = mockFetch;
+
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock
+    });
+
+    localStorageMock.clear();
+
+    // Default mock response
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { id: 1, name: 'iPhone 15 Pro', image_url: 'img1.jpg', price_per_number: 100 },
+        { id: 2, name: 'Canasta de Regalo', image_url: 'img2.jpg', price_per_number: 50 },
+        { id: 3, name: 'Viaje a la Playa', image_url: 'img3.jpg', price_per_number: 200 },
+        { id: 4, name: 'Sorteo 4', image_url: 'img4.jpg', price_per_number: 10 },
+        { id: 5, name: 'Sorteo 5', image_url: 'img5.jpg', price_per_number: 20 },
+      ]
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    mockFetch.mockClear();
   });
 
   const renderWithRouter = (component) => {
     return render(<RouterWrapper>{component}</RouterWrapper>);
   };
 
-  // Helper para encontrar botones de navegación (evita conflictos con spans)
-  const getBotonVisitante = () => screen.getByRole('button', { name: 'Visitante' });
-  const getBotonOrganizador = () => screen.getByRole('button', { name: 'Organizador' });
-
   // ==========================================================================
-  // 1. RENDERING DE CARDS CON DATOS VÁLIDOS
+  // 1. RENDERING DE CARDS CON DATOS VÁLIDOS (VISITANTE)
   // ==========================================================================
-  describe('Rendering de cards con datos válidos', () => {
-    it('debe renderizar correctamente todas las cards de sorteos con datos válidos', async () => {
+  describe('Rendering de cards con datos válidos (Visitante)', () => {
+    it('debe renderizar correctamente todas las cards de sorteos', async () => {
       renderWithRouter(<GaleriaSorteos />);
-      
+
       // Verificar que el spinner se muestra inicialmente
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
+      expect(screen.getByText('Cargando sorteos de la base de datos...')).toBeInTheDocument();
 
       // Esperar a que termine la carga
       await waitFor(() => {
@@ -69,334 +103,86 @@ describe('Pruebas Automáticas - Galería de Sorteos', () => {
       expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
       expect(screen.getByText('Canasta de Regalo')).toBeInTheDocument();
       expect(screen.getByText('Viaje a la Playa')).toBeInTheDocument();
-    });
 
-    it('debe pasar los props correctos a cada TarjetaSorteo', async () => {
-      const { default: TarjetaSorteo } = await import('../JSX/TarjetaSorteo');
-      
+      // Verificar título de visitante
+      expect(screen.getByText('Nuestros Sorteos Activos')).toBeInTheDocument();
+    });
+  });
+
+  // ==========================================================================
+  // 2. VISTA ORGANIZADOR
+  // ==========================================================================
+  describe('Vista Organizador', () => {
+    it('debe mostrar vista de organizador cuando hay token', async () => {
+      localStorageMock.setItem('authToken', 'fake-token');
+
       renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar a que cargue
+
       await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
+        expect(screen.getByText('Panel de Organizador')).toBeInTheDocument();
       }, { timeout: 3000 });
 
-      // Verificar que se llamó a TarjetaSorteo con todos los sorteos
-      expect(TarjetaSorteo).toHaveBeenCalledTimes(5);
-
-      // Verificar que al menos una llamada tiene los props correctos
-      expect(TarjetaSorteo).toHaveBeenCalledWith(
+      // Verificar que se envía el token en el header
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/raffles/'),
         expect.objectContaining({
-          sorteo: expect.objectContaining({
-            id: expect.any(Number),
-            name: expect.any(String),
-            price_per_number: expect.any(Number)
-          }),
-          esOrganizador: false
-        }),
-        expect.anything()
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer fake-token'
+          })
+        })
       );
     });
-  });
 
-  // ==========================================================================
-  // 2. VISUALIZACIÓN DE LOADER (SPINNER) CUANDO ESTÁ CARGANDO
-  // ==========================================================================
-  describe('Visualización de loader (spinner) cuando está cargando', () => {
-    it('debe mostrar el spinner durante la carga inicial', async () => {
+    it('debe mostrar estado vacío con botón de crear para organizador', async () => {
+      localStorageMock.setItem('authToken', 'fake-token');
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => []
+      });
+
       renderWithRouter(<GaleriaSorteos />);
 
-      // Verificar spinner inicial
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-
-      // Esperar a que desaparezca
       await waitFor(() => {
-        expect(screen.queryByText('Cargando sorteos...')).not.toBeInTheDocument();
-      }, { timeout: 3000 });
-    });
-
-    it('debe mostrar el spinner durante cada cambio de vista', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.queryByText('Cargando sorteos...')).not.toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Cambiar vista - debería mostrar spinner nuevamente
-      await user.click(getBotonOrganizador());
-
-      // Verificar que aparece el spinner
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-
-      // Esperar a que termine la carga
-      await waitFor(() => {
-        expect(screen.queryByText('Cargando sorteos...')).not.toBeInTheDocument();
-      }, { timeout: 3000 });
-    });
-
-    it('el spinner debe tener una estructura visible', () => {
-      renderWithRouter(<GaleriaSorteos />);
-
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-    });
-  });
-
-  // ==========================================================================
-  // 3. MENSAJE "NO HAY SORTEOS" SI LA LISTA ESTÁ VACÍA
-  // ==========================================================================
-  describe('Mensaje "No hay sorteos" si la lista está vacía', () => {
-    it('debe mostrar mensaje específico para organizador cuando no hay sorteos', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Cambiar a organizador
-      await user.click(getBotonOrganizador());
-
-      // Esperar carga
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-    });
-
-    it('debe mostrar mensaje diferente para visitante vs organizador', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Ir a organizador
-      await user.click(getBotonOrganizador());
-      
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar mensaje de organizador
-      expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      expect(screen.getByText('Crear Nuevo Sorteo')).toBeInTheDocument();
-
-      // Cambiar a visitante
-      await user.click(getBotonVisitante());
-
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar que no muestra mensaje de vacío
-      expect(screen.queryByText('No hay sorteos en el sistema')).not.toBeInTheDocument();
-    });
-
-    it('debe mostrar botón de acción en estado vacío del organizador', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Cambiar a organizador
-      await user.click(getBotonOrganizador());
-
-      await waitFor(() => {
-        expect(screen.getByText('Crear Nuevo Sorteo')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      const botonCrear = screen.getByText('Crear Nuevo Sorteo');
-      expect(botonCrear).toBeInTheDocument();
-    });
-  });
-
-  // ==========================================================================
-  // 4. COMPORTAMIENTO ANTE ERROR DE API
-  // ==========================================================================
-  describe('Comportamiento ante error de API', () => {
-    it('debe manejar errores sin romper la aplicación', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-
-      // Esperar a que cargue normalmente
-      await waitFor(() => {
-        expect(screen.queryByText('Cargando sorteos...')).not.toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar que la aplicación sigue funcionando (usando botones específicos)
-      expect(getBotonVisitante()).toBeInTheDocument();
-      expect(getBotonOrganizador()).toBeInTheDocument();
-    });
-
-    it('debe ser resiliente y mostrar interfaz usable', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga
-      await waitFor(() => {
-        const tieneSorteos = screen.queryByText('iPhone 15 Pro') !== null;
-        const tieneNavegacion = getBotonVisitante() !== null;
-        expect(tieneSorteos || tieneNavegacion).toBe(true);
+        expect(screen.getByText('No has creado ningún sorteo aún')).toBeInTheDocument();
+        expect(screen.getByText('Crear mi primera Rifa')).toBeInTheDocument();
       }, { timeout: 3000 });
     });
   });
 
   // ==========================================================================
-  // 5. PAGINACIÓN ACTIVA
+  // 3. MANEJO DE ERRORES
   // ==========================================================================
-  describe('Paginación activa', () => {
-    it('debe tener navegación activa entre vistas', async () => {
+  describe('Manejo de errores', () => {
+    it('debe mostrar mensaje de error cuando falla la API', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Error de red'));
+
       renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      const botonVisitante = getBotonVisitante();
-      const botonOrganizador = getBotonOrganizador();
-
-      // Verificar estado activo inicial
-      expect(botonVisitante).toHaveClass('active');
-      expect(botonOrganizador).not.toHaveClass('active');
-
-      // Cambiar vista
-      await user.click(botonOrganizador);
 
       await waitFor(() => {
-        expect(botonOrganizador).toHaveClass('active');
-        expect(botonVisitante).not.toHaveClass('active');
+        expect(screen.getByText('Hubo un problema cargando los sorteos.')).toBeInTheDocument();
+        expect(screen.getByText('Error de red')).toBeInTheDocument();
       }, { timeout: 3000 });
     });
 
-    it('debe mantener el estado de navegación consistente', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
+    it('debe hacer logout si recibe 401 como organizador', async () => {
+      localStorageMock.setItem('authToken', 'fake-token');
 
-      // Múltiples cambios de vista
-      await user.click(getBotonOrganizador());
-      
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-      
-      await user.click(getBotonVisitante());
-      
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-      
-      await user.click(getBotonOrganizador());
+      // Mock window.location.reload
+      const reloadMock = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: { reload: reloadMock }
+      });
 
-      await waitFor(() => {
-        expect(getBotonOrganizador()).toHaveClass('active');
-        expect(getBotonVisitante()).not.toHaveClass('active');
-      }, { timeout: 3000 });
-    });
-  });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401
+      });
 
-  // ==========================================================================
-  // 6. PRUEBAS DE INTEGRACIÓN COMPLETA PARa  GALERIA SORTEOS
-  // ==========================================================================
-  describe('Pruebas de integración completa', () => {
-    it('debe completar el flujo completo: carga -> muestra -> cambia vista -> estado vacío', async () => {
       renderWithRouter(<GaleriaSorteos />);
 
-      // 1. Verificar carga inicial
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-      
-      // 2. Verificar muestra de sorteos
       await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // 3. Verificar cambio de vista
-      await user.click(getBotonOrganizador());
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-      
-      // 4. Verificar estado vacío
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // 5. Verificar botón de acción
-      expect(screen.getByText('Crear Nuevo Sorteo')).toBeInTheDocument();
-    });
-
-    it('debe manejar correctamente el ciclo de vida del componente', async () => {
-      const { unmount } = renderWithRouter(<GaleriaSorteos />);
-
-      // Verificar que se monta correctamente
-      expect(screen.getByText('Cargando sorteos...')).toBeInTheDocument();
-
-      // Esperar carga
-      await waitFor(() => {
-        expect(screen.getByText('iPhone 15 Pro')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Desmontar sin errores
-      expect(() => unmount()).not.toThrow();
-    });
-  });
-
-  // ==========================================================================
-  // 7. PRUEBAS  DE CONTENIDO
-  // ==========================================================================
-  describe('Contenido y textos específicos', () => {
-    it('debe mostrar los títulos correctos según la vista', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // Esperar carga inicial
-      await waitFor(() => {
-        expect(screen.getByText('Nuestros Sorteos Activos')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar título en vista visitante
-      expect(screen.getByText('Nuestros Sorteos Activos')).toBeInTheDocument();
-      expect(screen.getByText('¡Elige tu favorito, apoya a la comunidad y gana!')).toBeInTheDocument();
-
-      // Cambiar a organizador
-      await user.click(getBotonOrganizador());
-
-      // En vista organizador vacía, NO debería mostrar los títulos de galería
-      // porque se muestra el estado vacío en su lugar
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar que NO muestra los títulos de galería en estado vacío
-      expect(screen.queryByText('Todos los Sorteos del Sistema')).not.toBeInTheDocument();
-      expect(screen.queryByText('Visualiza y administra tus sorteos.')).not.toBeInTheDocument();
-    });
-
-    it('debe mostrar títulos de galería solo cuando hay sorteos', async () => {
-      renderWithRouter(<GaleriaSorteos />);
-      
-      // En visitante (con sorteos) debería mostrar títulos
-      await waitFor(() => {
-        expect(screen.getByText('Nuestros Sorteos Activos')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Cambiar a organizador (vacío) - NO debería mostrar títulos de galería
-      await user.click(getBotonOrganizador());
-
-      await waitFor(() => {
-        expect(screen.getByText('No hay sorteos en el sistema')).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Verificar que muestra estado vacío en lugar de títulos de galería
-      expect(screen.queryByText('Todos los Sorteos del Sistema')).not.toBeInTheDocument();
-      
-      // Volver a visitante - debería mostrar títulos nuevamente
-      await user.click(getBotonVisitante());
-
-      await waitFor(() => {
-        expect(screen.getByText('Nuestros Sorteos Activos')).toBeInTheDocument();
+        expect(localStorageMock.removeItem).toHaveBeenCalledWith('authToken');
+        expect(reloadMock).toHaveBeenCalled();
       }, { timeout: 3000 });
     });
   });

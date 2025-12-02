@@ -116,8 +116,9 @@ export default function RegistroUsuario() {
 
         <form onSubmit={handleSubmit} className={styles.registroForm}>
           <div className={styles.formGroup}>
-            <label>Nombre</label>
+            <label htmlFor="name">Nombre</label>
             <input
+              id="name"
               type="text"
               name="name"
               value={formData.name}
@@ -127,8 +128,9 @@ export default function RegistroUsuario() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Correo electrónico</label>
+            <label htmlFor="email">Correo electrónico</label>
             <input
+              id="email"
               type="email"
               name="email"
               value={formData.email}
@@ -138,8 +140,9 @@ export default function RegistroUsuario() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Teléfono</label>
+            <label htmlFor="phone">Teléfono</label>
             <input
+              id="phone"
               type="tel"
               name="phone"
               value={formData.phone}
@@ -149,8 +152,9 @@ export default function RegistroUsuario() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Tipo de usuario</label>
+            <label htmlFor="user_type">Tipo de usuario</label>
             <select
+              id="user_type"
               name="user_type"
               value={formData.user_type}
               onChange={handleChange}
@@ -160,8 +164,9 @@ export default function RegistroUsuario() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Contraseña</label>
+            <label htmlFor="password1">Contraseña</label>
             <input
+              id="password1"
               type="password"
               name="password1"
               value={formData.password1}
@@ -171,8 +176,9 @@ export default function RegistroUsuario() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Confirmar contraseña</label>
+            <label htmlFor="password2">Confirmar contraseña</label>
             <input
+              id="password2"
               type="password"
               name="password2"
               value={formData.password2}
