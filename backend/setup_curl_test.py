@@ -4,19 +4,20 @@ from datetime import timedelta
 from decimal import Decimal
 
 import django
-from django.contrib.auth import get_user_model
 from django.utils import timezone
-
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from apps.purchases.models import Purchase, PurchaseDetail
-from apps.raffles.models import Raffle
 
 # Add the project root to sys.path so we can import config
 sys.path.append("/app")
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 django.setup()
+
+from django.contrib.auth import get_user_model
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.purchases.models import Purchase, PurchaseDetail
+from apps.raffles.models import Raffle
 
 User = get_user_model()
 
@@ -30,9 +31,10 @@ organizer.save()
 
 client, _ = User.objects.get_or_create(
     email="client_curl@example.com",
-    defaults={"name": "Client Curl", "user_type": "customer"},
+    defaults={"name": "Client Curl", "user_type": "customer", "phone": "9998887777"},
 )
 client.set_password("pass")
+client.phone = "9998887777"
 client.save()
 
 # 2. Create Raffle

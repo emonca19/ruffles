@@ -126,7 +126,11 @@ class PurchaseManifestSerializer(serializers.ModelSerializer):
 
     def get_customer_phone(self, obj: PurchaseDetail) -> str:
         purchase = obj.purchase
-        return purchase.guest_phone
+        if purchase.guest_phone:
+            return purchase.guest_phone
+        if purchase.customer:
+            return purchase.customer.phone
+        return ""
 
     def get_customer_email(self, obj: PurchaseDetail) -> str:
         purchase = obj.purchase
