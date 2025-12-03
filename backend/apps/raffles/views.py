@@ -19,7 +19,7 @@ from .serializers import (
     PublicRaffleSerializer,
     RaffleAvailabilitySerializer,
 )
-from .services import get_raffle_availability
+from .services import RaffleAvailability, get_raffle_availability
 
 
 def _parse_bool_param(value: str | None) -> bool | None:
@@ -121,7 +121,7 @@ class RaffleAvailabilityView(generics.RetrieveAPIView):
     serializer_class = RaffleAvailabilitySerializer
     permission_classes = (permissions.AllowAny,)
 
-    def get_object(self) -> dict:
+    def get_object(self) -> RaffleAvailability:
         raffle = get_object_or_404(Raffle.objects.active(), pk=self.kwargs["pk"])
         return get_raffle_availability(raffle)
 
@@ -164,7 +164,7 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
     def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.request.method == "POST":
             return OrganizerRaffleWriteSerializer
-        return super().get_serializer_class()
+        return super().get_serializer_class()  # type: ignore[return-value]
 
     def perform_create(self, serializer: OrganizerRaffleWriteSerializer) -> None:
         serializer.save()
@@ -175,11 +175,46 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
         """
         write_serializer = self.get_serializer(data=request.data)
         write_serializer.is_valid(raise_exception=True)
-        self.perform_create(write_serializer)
+        self.perform_create(cast(OrganizerRaffleWriteSerializer, write_serializer))
         read_serializer = OrganizerRaffleSerializer(
             write_serializer.instance, context=self.get_serializer_context()
         )
         headers = self.get_success_headers(read_serializer.data)
         return Response(
             read_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+
+@extend_schema(
+    tags=["Raffles"],
+    summary="Retrieve raffle manifest",
+    description="Returns a detailed list of all taken numbers for a raffle. Only accessible by the organizer.",
+)
+class RaffleManifestView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = None  # Return all numbers at once
+
+    def get_serializer_class(self) -> type[serializers.Serializer]:
+        from apps.purchases.serializers import PurchaseManifestSerializer
+
+        return PurchaseManifestSerializer
+
+    def get_queryset(self) -> QuerySet:
+        from apps.purchases.models import Purchase, PurchaseDetail
+
+        raffle = get_object_or_404(Raffle, pk=self.kwargs["pk"])
+
+        # Check permission: Only the organizer can view the manifest
+        if raffle.organizer != self.request.user:
+            self.permission_denied(
+                self.request,
+                message="You do not have permission to view this manifest.",
+            )
+
+        return (
+            PurchaseDetail.objects.filter(purchase__raffle=raffle)
+            .select_related("purchase", "purchase__customer")
+            .exclude(purchase__status=Purchase.Status.CANCELED)
+            .exclude(purchase__status=Purchase.Status.EXPIRED)
+            .order_by("number")
         )

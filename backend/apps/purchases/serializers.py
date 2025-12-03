@@ -91,3 +91,45 @@ class PaymentReceiptSerializer(serializers.ModelSerializer):
         model = PaymentWithReceipt
         fields: ClassVar[list[str]] = ["receipt_image", "phone"]
         extra_kwargs: ClassVar[dict[str, Any]] = {"receipt_image": {"required": True}}
+
+
+class PurchaseManifestSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="purchase.status", read_only=True)
+    customer_name = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
+    customer_email = serializers.SerializerMethodField()
+    reserved_at = serializers.DateTimeField(
+        source="purchase.reserved_at", read_only=True
+    )
+    expires_at = serializers.DateTimeField(source="purchase.expires_at", read_only=True)
+    purchase_id = serializers.IntegerField(source="purchase.id", read_only=True)
+
+    class Meta:
+        model = PurchaseDetail
+        fields: ClassVar[list[str]] = [
+            "number",
+            "status",
+            "customer_name",
+            "customer_phone",
+            "customer_email",
+            "reserved_at",
+            "expires_at",
+            "purchase_id",
+        ]
+
+    def get_customer_name(self, obj: PurchaseDetail) -> str:
+        purchase = obj.purchase
+        if purchase.customer:
+            # User model appears to use 'name' or just email if name is missing
+            return getattr(purchase.customer, "name", "") or purchase.customer.email
+        return purchase.guest_name
+
+    def get_customer_phone(self, obj: PurchaseDetail) -> str:
+        purchase = obj.purchase
+        return purchase.guest_phone
+
+    def get_customer_email(self, obj: PurchaseDetail) -> str:
+        purchase = obj.purchase
+        if purchase.customer:
+            return purchase.customer.email
+        return purchase.guest_email

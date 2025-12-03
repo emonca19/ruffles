@@ -5,6 +5,7 @@ from .views import (
     RaffleAvailabilityView,
     RaffleDetailView,
     RaffleListView,
+    RaffleManifestView,
 )
 
 urlpatterns = [
@@ -16,4 +17,9 @@ urlpatterns = [
         name="raffle-availability",
     ),
     path("organizer/", OrganizerRaffleListView.as_view(), name="organizer-raffle-list"),
+    path(
+        "<int:pk>/manifest/",
+        RaffleManifestView.as_view(),
+        name="raffle-manifest",
+    ),
 ]
