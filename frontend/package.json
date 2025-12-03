@@ -22,6 +22,7 @@
     "test:tabla-numeros": "vitest run src/service/TablaNumeros.test.jsx --reporter=verbose",
     "test:tabla-numeros:report": "vitest run src/service/tablaNumeros.test.jsx --reporter=junit --outputFile=./test-results/tabla-numeros.xml",
     "test:panel_personal":"vitest run src/service/panel_personal.test.jsx",
+    "test:panel_personal_interface":"vitest run src/service/panel_personal_interface.test",
     "test:all": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
