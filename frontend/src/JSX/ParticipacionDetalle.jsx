@@ -94,7 +94,7 @@ export default function ParticipacionDetalle() {
         formData.append("file", comprobante);
 
         try {
-            const resp = await fetch(`${API_BASE_URL}/api/v1/payments/upload/`, {
+            const resp = await fetch(`${API_BASE_URL}/api/v1/purchases`, {
                 method: "POST",
                 body: formData
             });

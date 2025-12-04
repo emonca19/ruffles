@@ -30,6 +30,9 @@ export default function Navbar() {
         {esOrganizador && (
           <li><Link to="/registroUsuario">Registrar Organizador</Link></li>
         )}
+        {esOrganizador && (
+          <li><Link to="/galeriaEvidencia">Apartados/Pagos</Link></li>
+        )}
         {/*<li><Link to="/contacto">Contacto</Link></li> */}
       </ul>
 

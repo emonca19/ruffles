@@ -9,7 +9,9 @@ import RegistroUsuario from './RegistroAdmin.jsx';
 import RuffleDetail from './RuffleDetail.jsx';
 import ParticipacionSorteos from './ParticipacionSorteos.jsx';
 import ParticipacionDetalle from './ParticipacionDetalle.jsx';  
+import GaleriaEvidencia from './GaleriaEvidencia.jsx';
 import '../CSS/Global.css';
+import DetalleComprobante from './DetalleComprobante.jsx';
 
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
         <Route path="/participacion" element={<ParticipacionSorteos />} />
         <Route path="/galeria" element={<GaleriaSorteos />} />
         <Route path="/participacion/detalle/:id" element={<ParticipacionDetalle />} />
+        <Route path="/galeriaEvidencia" element={<GaleriaEvidencia />} />
+        <Route path="/evidencias/:id" element={<DetalleComprobante />} />
         </Route>
 
         
