@@ -1,7 +1,9 @@
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import QuerySet
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, parsers, permissions, serializers, status, viewsets
@@ -9,13 +11,18 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .models import Purchase
+from .models import Payment, PaymentWithReceipt, Purchase
 from .serializers import (
     PaymentReceiptSerializer,
     PurchaseReadSerializer,
     ReservationSerializer,
+    VerificationActionSerializer,
+    VerificationReadSerializer,
 )
 from .services import create_reservation
+
+if TYPE_CHECKING:
+    from apps.authentication.models import User
 
 
 @extend_schema(
@@ -126,8 +133,6 @@ class PurchaseViewSet(
         url_path="upload_receipt",
     )
     def upload_receipt(self, request: Request, pk: int | None = None) -> Response:
-        from django.shortcuts import get_object_or_404
-
         from rest_framework.exceptions import PermissionDenied
 
         purchase = get_object_or_404(Purchase, pk=pk)
@@ -147,8 +152,6 @@ class PurchaseViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        from .models import Payment, PaymentWithReceipt
-
         # Create Payment and Receipt
         payment = Payment.objects.create(
             purchase=purchase,
@@ -161,3 +164,93 @@ class PurchaseViewSet(
         )
 
         return Response(status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    tags=["Purchases"],
+    summary="List pending verifications",
+    description="List all payments requiring verification. Organizer only.",
+    responses=serializers.ListSerializer(child=VerificationReadSerializer()),
+)
+class VerificationViewSet(viewsets.GenericViewSet):
+    permission_classes: ClassVar[list[Any]] = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self) -> type[serializers.Serializer]:
+        if self.action == "verify":
+            return VerificationActionSerializer
+        return VerificationReadSerializer
+
+    def get_queryset(self) -> QuerySet[PaymentWithReceipt]:
+        user = cast("User", self.request.user)
+        if (
+            not user.is_authenticated or user.user_type != "organizer"
+        ):  # basic check, refined permissions maybe better
+            return PaymentWithReceipt.objects.none()
+
+        return (
+            PaymentWithReceipt.objects.select_related(
+                "payment",
+                "payment__purchase",
+                "payment__purchase__raffle",
+                "payment__purchase__customer",
+            )
+            .filter(verification_status=PaymentWithReceipt.VerificationStatus.PENDING)
+            .order_by("payment__payment_date")
+        )
+
+    def list(self, request: Request, *args: object, **kwargs: object) -> Response:
+        user = cast("User", request.user)
+        if user.user_type != "organizer":
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        tags=["Purchases"],
+        summary="Verify payment receipt",
+        description="Approve or reject a payment receipt.",
+        request=VerificationActionSerializer,
+        responses={200: VerificationReadSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def verify(self, request: Request, pk: int | None = None) -> Response:
+        user = cast("User", request.user)
+        if user.user_type != "organizer":
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        # We look up Payment ID in URL, but the queryset is PaymentWithReceipt (PK is one-to-one with Payment)
+        # PaymentWithReceipt has `payment` as OneToOne primary key.
+        receipt = get_object_or_404(PaymentWithReceipt, pk=pk)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        action_val = serializer.validated_data["action"]
+
+        if action_val == "HOOLA":  # Just checking logic
+            pass
+
+        if action_val == "approve":
+            receipt.mark_verified(
+                PaymentWithReceipt.VerificationStatus.APPROVED,
+                verified_at=timezone.now(),
+            )
+            receipt.verified_by = user
+            receipt.save()
+
+            # Mark purchase as PAID
+            purchase = receipt.payment.purchase
+            purchase.status = Purchase.Status.PAID
+            purchase.save()
+
+        elif action_val == "reject":
+            receipt.mark_verified(
+                PaymentWithReceipt.VerificationStatus.REJECTED,
+                verified_at=timezone.now(),
+            )
+            receipt.verified_by = user
+            receipt.save()
+            # Purchase likely stays PENDING or custom logic. User story implies just verification.
+
+        return Response(VerificationReadSerializer(receipt).data)

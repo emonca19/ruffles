@@ -137,3 +137,56 @@ class PurchaseManifestSerializer(serializers.ModelSerializer):
         if purchase.customer:
             return purchase.customer.email
         return purchase.guest_email
+
+
+class VerificationReadSerializer(serializers.ModelSerializer):
+    """Serializer for displaying verification details to the organizer."""
+
+    payment_id = serializers.IntegerField(source="payment.id", read_only=True)
+    purchase_id = serializers.CharField(source="payment.purchase.id", read_only=True)
+    raffle_name = serializers.CharField(
+        source="payment.purchase.raffle.name", read_only=True
+    )
+    customer_name = serializers.SerializerMethodField()
+    total_amount = serializers.DecimalField(
+        source="payment.amount", max_digits=12, decimal_places=2, read_only=True
+    )
+    tickets = serializers.SerializerMethodField()
+    payment_date = serializers.DateTimeField(
+        source="payment.payment_date", read_only=True
+    )
+    status = serializers.CharField(source="verification_status", read_only=True)
+    receipt_url = serializers.ImageField(source="receipt_image", read_only=True)
+
+    class Meta:
+        model = PaymentWithReceipt
+        fields: ClassVar[list[str]] = [
+            "payment_id",
+            "purchase_id",
+            "raffle_name",
+            "customer_name",
+            "total_amount",
+            "tickets",
+            "receipt_url",
+            "payment_date",
+            "status",
+        ]
+
+    def get_customer_name(self, obj: PaymentWithReceipt) -> str:
+        purchase = obj.payment.purchase
+        if purchase.customer:
+            return getattr(purchase.customer, "name", "") or purchase.customer.email
+        return purchase.guest_name
+
+    def get_tickets(self, obj: PaymentWithReceipt) -> list[str]:
+        # Return list of ticket numbers formatted as strings
+        return [
+            str(detail.number).zfill(3)
+            for detail in obj.payment.purchase.details.all()  # type: ignore
+        ]
+
+
+class VerificationActionSerializer(serializers.Serializer):
+    """Serializer for the approve/reject action."""
+
+    action = serializers.ChoiceField(choices=["approve", "reject"])

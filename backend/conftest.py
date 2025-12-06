@@ -1,28 +1,35 @@
 import contextlib
 import importlib
+from typing import Any
 
 from django.contrib.auth import get_user_model
 
 import pytest
 
-APIClient = None
+APIClient: Any
+
 try:
     _mod = importlib.import_module("rest_framework.test")
     APIClient = _mod.APIClient
 except Exception:
 
-    class APIClient:
+    class FakeAPIClient:
         def __init__(self):
             pass
 
         def credentials(self, **kwargs):
             return None
 
+        def force_authenticate(self, user=None):
+            pass
+
         def get(self, *args, **kwargs):
             raise RuntimeError("rest_framework not available in this environment")
 
         def post(self, *args, **kwargs):
             raise RuntimeError("rest_framework not available in this environment")
+
+    APIClient = FakeAPIClient
 
 
 pytestmark = pytest.mark.django_db
@@ -54,7 +61,7 @@ def user_factory(db):
         if user_type is not None:
             create_kwargs["user_type"] = user_type
 
-        user = User.objects.create_user(**create_kwargs)
+        user = User.objects.create_user(**create_kwargs)  # type: ignore
 
         try:
             # Ensure name is set even if manager ignored it
@@ -117,24 +124,28 @@ def mocker(monkeypatch):
                 se = kwargs["side_effect"]
                 if isinstance(se, Exception):
 
-                    def _fn(*a, **k):
+                    def _fn_exception(*a, **k):
                         raise se
+
+                    callback = _fn_exception
                 else:
 
-                    def _fn(*a, **k):
+                    def _fn_call(*a, **k):
                         return se(*a, **k)
 
-                monkeypatch.setattr(target, _fn, raising=False)
+                    callback = _fn_call
+
+                monkeypatch.setattr(target, callback, raising=False)
                 return
             if "new" in kwargs:
                 monkeypatch.setattr(target, kwargs["new"], raising=False)
                 return
             if "return_value" in kwargs:
 
-                def _fn(*a, **k):
+                def _fn_return(*a, **k):
                     return kwargs["return_value"]
 
-                monkeypatch.setattr(target, _fn, raising=False)
+                monkeypatch.setattr(target, _fn_return, raising=False)
                 return
             raise ValueError("Unsupported mocker.patch call")
 
