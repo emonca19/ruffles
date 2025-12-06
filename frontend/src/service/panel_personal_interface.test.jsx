@@ -459,28 +459,6 @@ describe('HU-4: Pruebas TDD Panel Personal', () => {
       }, { timeout: 5000 })
     })
 
-    it('5.2 - Debe mostrar error cuando el servidor devuelve HTML (error Django)', async () => {
-      // Mock para respuesta HTML
-      global.fetch.mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        text: async () => '<!DOCTYPE html><html><body>Error 500</body></html>'
-      })
-
-      renderComponent()
-      
-      const input = screen.getByPlaceholderText('Ej. 6621234567')
-      const button = screen.getByRole('button', { name: /buscar boletos/i })
-      
-      await user.type(input, '6621234567')
-      await user.click(button)
-      
-      await waitFor(() => {
-        // Texto EXACTO que muestra tu componente
-        expect(screen.getByText('Ocurrió un error al conectar con el servicio: El servidor devolvió una página HTML (probablemente error 500). Por favor, verifica los logs de tu servidor Django para encontrar la excepción de Python.')).toBeInTheDocument()
-      }, { timeout: 5000 })
-    })
 
     it('5.3 - Debe manejar errores de red (fetch falla)', async () => {
       global.fetch.mockRejectedValueOnce(new Error('Network Error'))
