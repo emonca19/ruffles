@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.urls import reverse
@@ -21,8 +22,8 @@ class ValidationEdgeCaseTests(APITestCase):
             number_end=100,
             price_per_number=Decimal("10.00"),
             sale_start_at=timezone.now(),
-            sale_end_at=timezone.now() + timezone.timedelta(days=7),
-            draw_scheduled_at=timezone.now() + timezone.timedelta(days=8),
+            sale_end_at=timezone.now() + timedelta(days=7),
+            draw_scheduled_at=timezone.now() + timedelta(days=8),
             organizer=self.organizer,
         )
         self.url = reverse("purchase-list")
@@ -32,7 +33,7 @@ class ValidationEdgeCaseTests(APITestCase):
         Test submitting duplicate numbers in the same request.
         """
         data = {
-            "raffle_id": self.raffle.id,
+            "raffle_id": self.raffle.id,  # type: ignore
             "numbers": [10, 10],  # Duplicate!
             "guest_name": "Guest",
             "guest_phone": "1234567890",

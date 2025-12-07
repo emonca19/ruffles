@@ -8,7 +8,7 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -129,7 +129,7 @@ class RaffleAvailabilityView(generics.RetrieveAPIView):
 @extend_schema(
     tags=["Raffles"],
     summary="List or create organizer raffles",
-    description="Authenticated organizers can list their raffles or create a new one.",
+    description="Authenticated organizers can list their raffles or create a new one. Creating requires multipart/form-data for image upload.",
     request=OrganizerRaffleWriteSerializer,
     responses=OrganizerRaffleSerializer,
 )
@@ -138,7 +138,7 @@ class OrganizerRaffleListView(generics.ListCreateAPIView):
     serializer_class = OrganizerRaffleSerializer
     pagination_class = RafflePagination
     permission_classes = (permissions.IsAuthenticated,)
-    parser_classes = (JSONParser, MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser,)
 
     def get_queryset(self) -> QuerySet[Raffle]:
         request = cast(Request, self.request)

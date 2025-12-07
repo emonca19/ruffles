@@ -163,6 +163,7 @@ SPECTACULAR_SETTINGS = {
             "description": "Public raffle browsing and organizer management endpoints.",
         },
     ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 SIMPLE_JWT = {

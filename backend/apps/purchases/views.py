@@ -1,3 +1,4 @@
+import re
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -8,12 +9,14 @@ from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, parsers, permissions, serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .models import Payment, PaymentWithReceipt, Purchase
 from .serializers import (
     PaymentReceiptSerializer,
+    PurchaseCancellationSerializer,
     PurchaseReadSerializer,
     ReservationSerializer,
     VerificationActionSerializer,
@@ -65,10 +68,6 @@ class PurchaseViewSet(
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self) -> QuerySet[Purchase]:
-        import re
-
-        from rest_framework.exceptions import ValidationError
-
         user = self.request.user
         phone = self.request.query_params.get("phone")
 
@@ -79,7 +78,12 @@ class PurchaseViewSet(
         queryset = Purchase.objects.select_related("raffle").prefetch_related("details")
 
         if user.is_authenticated:
-            # Organizer/Customer logic
+            user = cast("User", user)
+            # Organizer: Allow full access (or filtered by their raffles if needed)
+            if user.user_type == "organizer":
+                return queryset.order_by("-created_at")
+
+            # Customer logic
             if phone:
                 # If phone provided, look up guest purchases (or their own if matched)
                 return queryset.filter(guest_phone=phone).order_by("-created_at")
@@ -115,7 +119,7 @@ class PurchaseViewSet(
         except DjangoValidationError as e:
             return Response({"detail": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
-        read_serializer = PurchaseReadSerializer(purchase)
+        read_serializer = PurchaseReadSerializer(purchase, context={"request": request})
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -133,8 +137,6 @@ class PurchaseViewSet(
         url_path="upload_receipt",
     )
     def upload_receipt(self, request: Request, pk: int | None = None) -> Response:
-        from rest_framework.exceptions import PermissionDenied
-
         purchase = get_object_or_404(Purchase, pk=pk)
         user = request.user
         phone = request.data.get("phone")
@@ -164,6 +166,70 @@ class PurchaseViewSet(
         )
 
         return Response(status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["Purchases"],
+        summary="Cancel a reservation",
+        description="Cancel a pending reservation. Allowed for Organizer, Owner, or Guest (with phone).",
+        request=PurchaseCancellationSerializer,
+        responses={200: None},
+    )
+    @action(detail=True, methods=["post"])
+    def cancel(self, request: Request, pk: int | None = None) -> Response:
+        purchase = get_object_or_404(Purchase, pk=pk)
+        user = request.user
+        phone = request.data.get("phone")
+
+        # Permission check
+        has_permission = False
+        if user.is_authenticated:
+            user = cast("User", user)
+            # Organizer or Owner
+            if user.user_type == "organizer" or purchase.customer == user:
+                has_permission = True
+        else:
+            # Guest check
+            if phone and purchase.guest_phone == phone:
+                has_permission = True
+
+        if not has_permission:
+            raise PermissionDenied(
+                "You do not have permission to cancel this reservation."
+            )
+
+        # Validation
+        if purchase.status == Purchase.Status.PAID:
+            raise ValidationError("Cannot cancel a paid purchase.")
+
+        # Idempotency / Action
+        if purchase.status == Purchase.Status.CANCELED:
+            return Response(
+                {"detail": "Purchase already canceled."}, status=status.HTTP_200_OK
+            )
+
+        # Reject any pending payment receipts to release the reservation cleanly.
+        for payment in purchase.payments.all():  # type: ignore
+            try:
+                # Access OneToOne related receipt
+                receipt = payment.receipt
+                if (
+                    receipt.verification_status
+                    == PaymentWithReceipt.VerificationStatus.PENDING
+                ):
+                    receipt.mark_verified(
+                        PaymentWithReceipt.VerificationStatus.REJECTED,
+                        verified_at=timezone.now(),
+                    )
+                    if user.is_authenticated:
+                        receipt.verified_by = user
+                        receipt.save(update_fields=["verified_by"])
+            except PaymentWithReceipt.DoesNotExist:
+                continue  # Payment has no receipt (e.g., online payment or incomplete)
+
+        purchase.status = Purchase.Status.CANCELED
+        purchase.save()
+
+        return Response(status=status.HTTP_200_OK)
 
 
 @extend_schema(
@@ -213,6 +279,7 @@ class VerificationViewSet(viewsets.GenericViewSet):
         description="Approve or reject a payment receipt.",
         request=VerificationActionSerializer,
         responses={200: VerificationReadSerializer},
+        parameters=[OpenApiParameter("id", int, location=OpenApiParameter.PATH)],
     )
     @action(detail=True, methods=["post"])
     def verify(self, request: Request, pk: int | None = None) -> Response:
@@ -220,16 +287,11 @@ class VerificationViewSet(viewsets.GenericViewSet):
         if user.user_type != "organizer":
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        # We look up Payment ID in URL, but the queryset is PaymentWithReceipt (PK is one-to-one with Payment)
-        # PaymentWithReceipt has `payment` as OneToOne primary key.
         receipt = get_object_or_404(PaymentWithReceipt, pk=pk)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         action_val = serializer.validated_data["action"]
-
-        if action_val == "HOOLA":  # Just checking logic
-            pass
 
         if action_val == "approve":
             receipt.mark_verified(

@@ -186,6 +186,16 @@ class VerificationReadSerializer(serializers.ModelSerializer):
         ]
 
 
+class PurchaseCancellationSerializer(serializers.Serializer):
+    """Serializer for cancelling a reservation."""
+
+    phone = serializers.CharField(
+        required=False,
+        help_text="Guest phone number (required if guest cancellation).",
+    )
+
+
+
 class VerificationActionSerializer(serializers.Serializer):
     """Serializer for the approve/reject action."""
 

@@ -53,7 +53,7 @@ class ReservationEdgeCaseTests(APITestCase):
 
         # 2. Try to reserve the same number
         self.client.force_authenticate(user=self.customer)
-        data = {"raffle_id": self.raffle.id, "numbers": [50]}
+        data = {"raffle_id": self.raffle.id, "numbers": [50]}  # type: ignore
         response = self.client.post(self.url, data)
 
         # 3. Assert failure (as per current design choice/limitation)
@@ -75,7 +75,7 @@ class ReservationEdgeCaseTests(APITestCase):
         self.raffle.save()
 
         self.client.force_authenticate(user=self.customer)
-        data = {"raffle_id": self.raffle.id, "numbers": [60]}
+        data = {"raffle_id": self.raffle.id, "numbers": [60]}  # type: ignore
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

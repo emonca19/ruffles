@@ -83,6 +83,8 @@ class OrganizerRaffleSerializer(RaffleBaseSerializer):
 
 
 class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+
     class Meta:
         model = Raffle
         fields: ClassVar[list[str]] = [
