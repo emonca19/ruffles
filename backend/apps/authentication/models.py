@@ -15,7 +15,7 @@ class UserManager(BaseUserManager["User"]):
         self, email: str, password: str | None, **extra_fields: object
     ) -> User:
         if not email:
-            raise ValueError("The email address must be set")
+            raise ValueError("La dirección de correo electrónico debe establecerse")
         normalized_email = self.normalize_email(email)
         user = self.model(email=normalized_email, **extra_fields)
         if password:
@@ -47,9 +47,9 @@ class UserManager(BaseUserManager["User"]):
         options.update(extra_fields)
 
         if options.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
+            raise ValueError("El superusuario debe tener is_staff=True.")
         if options.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
+            raise ValueError("El superusuario debe tener is_superuser=True.")
 
         return self._create_user(email, password, **options)
 
@@ -64,7 +64,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(
         max_length=20,
         blank=True,
-        validators=[RegexValidator(r"^[0-9+().\-\s]*$", "Enter a valid phone number.")],
+        validators=[
+            RegexValidator(r"^[0-9+().\-\s]*$", "Ingrese un número de teléfono válido.")
+        ],
     )
     user_type = models.CharField(
         max_length=20,

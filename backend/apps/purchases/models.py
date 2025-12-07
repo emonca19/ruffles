@@ -97,7 +97,7 @@ class Purchase(models.Model):
         super().clean()
         if not self.customer and not self.guest_phone:
             raise ValidationError(
-                "Purchase must have either a registered customer or a guest phone number."
+                "La compra debe tener un cliente registrado o un número de teléfono de invitado."
             )
 
 

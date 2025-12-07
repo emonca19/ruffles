@@ -19,7 +19,9 @@ class ReservationSerializer(serializers.Serializer):
         min_length=10,
         max_length=10,
         validators=[
-            RegexValidator(r"^\d{10}$", "Enter a valid 10-digit phone number.")
+            RegexValidator(
+                r"^\d{10}$", "Ingrese un número de teléfono válido de 10 dígitos."
+            )
         ],
     )
     guest_email = serializers.EmailField(required=False, allow_blank=True)
@@ -31,14 +33,16 @@ class ReservationSerializer(serializers.Serializer):
         # If user is not authenticated, guest_phone is required
         if not is_authenticated and not attrs.get("guest_phone"):
             raise serializers.ValidationError(
-                {"guest_phone": "Guest phone number is required for guest purchases."}
+                {
+                    "guest_phone": "Se requiere un número de teléfono de invitado para compras de invitados."
+                }
             )
 
         return attrs
 
     def validate_numbers(self, value: list[int]) -> list[int]:
         if len(value) != len(set(value)):
-            raise serializers.ValidationError("Duplicate numbers are not allowed.")
+            raise serializers.ValidationError("No se permiten números duplicados.")
         return value
 
 
@@ -193,7 +197,6 @@ class PurchaseCancellationSerializer(serializers.Serializer):
         required=False,
         help_text="Guest phone number (required if guest cancellation).",
     )
-
 
 
 class VerificationActionSerializer(serializers.Serializer):

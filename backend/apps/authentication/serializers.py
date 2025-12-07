@@ -46,7 +46,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def validate_email(self, value: str) -> str:
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError(
-                _("A user with this email already exists.")
+                _("Ya existe un usuario con este correo electrónico.")
             )
         return value.lower()
 
@@ -61,7 +61,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
             if not is_authorized:
                 raise serializers.ValidationError(
-                    _("Only organizers can create organizer accounts."),
+                    _("Solo los organizadores pueden crear cuentas de organizador."),
                 )
         return value
 

@@ -208,7 +208,7 @@ class RaffleManifestView(generics.ListAPIView):
         if raffle.organizer != self.request.user:
             self.permission_denied(
                 self.request,
-                message="You do not have permission to view this manifest.",
+                message="No tienes permiso para ver este manifiesto.",
             )
 
         return (

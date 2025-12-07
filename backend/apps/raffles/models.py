@@ -106,7 +106,9 @@ class Raffle(models.Model):
             and self.number_end is not None
             and self.number_start >= self.number_end
         ):
-            errors["number_end"] = "End number must be greater than start number."
+            errors["number_end"] = (
+                "El número final debe ser mayor que el número inicial."
+            )
 
         if self.sale_start_at:
             hermosillo_tz = ZoneInfo("America/Hermosillo")
@@ -115,7 +117,7 @@ class Raffle(models.Model):
 
             if start_hermosillo.date() < now_hermosillo.date():
                 errors["sale_start_at"] = (
-                    "Sale start date cannot be before today (Hermosillo time)."
+                    "La fecha de inicio de venta no puede ser anterior a hoy (hora de Hermosillo)."
                 )
 
         if (
@@ -123,14 +125,18 @@ class Raffle(models.Model):
             and self.sale_end_at
             and self.sale_end_at <= self.sale_start_at
         ):
-            errors["sale_end_at"] = "Sale end date must be after sale start date."
+            errors["sale_end_at"] = (
+                "La fecha de fin de venta debe ser posterior a la fecha de inicio."
+            )
 
         if (
             self.sale_end_at
             and self.draw_scheduled_at
             and self.draw_scheduled_at <= self.sale_end_at
         ):
-            errors["draw_scheduled_at"] = "Draw date must be after sale end date."
+            errors["draw_scheduled_at"] = (
+                "La fecha del sorteo debe ser posterior a la fecha de fin de venta."
+            )
 
         if self.winner_number is not None:
             range_known = self.number_start is not None and self.number_end is not None
@@ -138,7 +144,7 @@ class Raffle(models.Model):
                 self.number_start <= self.winner_number <= self.number_end
             ):
                 errors["winner_number"] = (
-                    "Winner number must fall within the configured range."
+                    "El número ganador debe estar dentro del rango configurado."
                 )
 
         if errors:

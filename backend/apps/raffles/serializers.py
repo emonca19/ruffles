@@ -107,19 +107,19 @@ class OrganizerRaffleWriteSerializer(serializers.ModelSerializer):
             if ns is None or ne is None:
                 raise serializers.ValidationError(
                     {
-                        "winner_number": "Number range must be provided to validate winner_number."
+                        "winner_number": "Se debe proporcionar un rango de números para validar el número ganador."
                     }
                 )
             try:
                 winner_val = int(winner_raw)
             except (TypeError, ValueError) as exc:
                 raise serializers.ValidationError(
-                    {"winner_number": "Invalid winner_number format."}
+                    {"winner_number": "Formato de número ganador inválido."}
                 ) from exc
             if not (ns <= winner_val <= ne):
                 raise serializers.ValidationError(
                     {
-                        "winner_number": "Winner number must fall within the configured range."
+                        "winner_number": "El número ganador debe estar dentro del rango configurado."
                     }
                 )
         return attrs

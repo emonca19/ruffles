@@ -72,8 +72,11 @@ class PurchaseViewSet(
         phone = self.request.query_params.get("phone")
 
         # Validate phone format if provided
+        # Validate phone format if provided
         if phone and not re.match(r"^\d{10}$", phone):
-            raise ValidationError({"phone": "Enter a valid 10-digit phone number."})
+            raise ValidationError(
+                {"phone": "Ingrese un número de teléfono válido de 10 dígitos."}
+            )
 
         queryset = Purchase.objects.select_related("raffle").prefetch_related("details")
 
@@ -93,7 +96,7 @@ class PurchaseViewSet(
         # Guest logic
         if not phone:
             raise ValidationError(
-                {"phone": "Phone number is required for guest access."}
+                {"phone": "Se requiere un número de teléfono para acceso de invitados."}
             )
 
         return queryset.filter(guest_phone=phone).order_by("-created_at")
@@ -145,11 +148,13 @@ class PurchaseViewSet(
         if user.is_authenticated:
             if purchase.customer != user:
                 raise PermissionDenied(
-                    "You do not have permission to upload a receipt for this purchase."
+                    "No tienes permiso para subir un comprobante para esta compra."
                 )
         else:
             if not phone or purchase.guest_phone != phone:
-                raise PermissionDenied("Invalid phone number for this reservation.")
+                raise PermissionDenied(
+                    "Número de teléfono inválido para esta reservación."
+                )
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -193,18 +198,16 @@ class PurchaseViewSet(
                 has_permission = True
 
         if not has_permission:
-            raise PermissionDenied(
-                "You do not have permission to cancel this reservation."
-            )
+            raise PermissionDenied("No tienes permiso para cancelar esta reservación.")
 
         # Validation
         if purchase.status == Purchase.Status.PAID:
-            raise ValidationError("Cannot cancel a paid purchase.")
+            raise ValidationError("No se puede cancelar una compra pagada.")
 
         # Idempotency / Action
         if purchase.status == Purchase.Status.CANCELED:
             return Response(
-                {"detail": "Purchase already canceled."}, status=status.HTTP_200_OK
+                {"detail": "La compra ya fue cancelada."}, status=status.HTTP_200_OK
             )
 
         # Reject any pending payment receipts to release the reservation cleanly.
@@ -313,6 +316,5 @@ class VerificationViewSet(viewsets.GenericViewSet):
             )
             receipt.verified_by = user
             receipt.save()
-            # Purchase likely stays PENDING or custom logic. User story implies just verification.
 
         return Response(VerificationReadSerializer(receipt).data)

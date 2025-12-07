@@ -29,15 +29,15 @@ def create_reservation(
         try:
             raffle = Raffle.objects.select_for_update().get(pk=raffle_id)
         except Raffle.DoesNotExist:
-            raise ValidationError("Raffle not found.") from None
+            raise ValidationError("Sorteo no encontrado.") from None
 
         if not raffle.is_on_sale:
-            raise ValidationError("Raffle is not currently on sale.")
+            raise ValidationError("El sorteo no está actualmente a la venta.")
 
         # 2. Validate Numbers Range
         for num in numbers:
             if not (raffle.number_start <= num <= raffle.number_end):
-                raise ValidationError(f"Number {num} is out of range.")
+                raise ValidationError(f"El número {num} está fuera de rango.")
 
         # 3. Check Availability (Locking)
         # We need to ensure these numbers aren't taken by ACTIVE purchases
@@ -53,7 +53,7 @@ def create_reservation(
                 Purchase.Status.PENDING,
             ]:
                 # You might want to check expiration here too, but for simplicity:
-                raise ValidationError(f"Number {detail.number} is not available.")
+                raise ValidationError(f"El número {detail.number} no está disponible.")
 
         # 4. Create Purchase
         total_amount = raffle.price_per_number * len(numbers)
