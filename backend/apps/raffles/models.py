@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import ClassVar, Self
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -107,8 +108,15 @@ class Raffle(models.Model):
         ):
             errors["number_end"] = "End number must be greater than start number."
 
-        # if self.sale_start_at and self.sale_start_at <= timezone.now():
-        #   errors["sale_start_at"] = "Sale start date must be in the future."
+        if self.sale_start_at:
+            hermosillo_tz = ZoneInfo("America/Hermosillo")
+            now_hermosillo = timezone.now().astimezone(hermosillo_tz)
+            start_hermosillo = self.sale_start_at.astimezone(hermosillo_tz)
+
+            if start_hermosillo.date() < now_hermosillo.date():
+                errors["sale_start_at"] = (
+                    "Sale start date cannot be before today (Hermosillo time)."
+                )
 
         if (
             self.sale_start_at
