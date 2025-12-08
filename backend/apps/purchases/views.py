@@ -310,11 +310,16 @@ class VerificationViewSet(viewsets.GenericViewSet):
             purchase.save()
 
         elif action_val == "reject":
+            # 1. Marcar el comprobante como RECHAZADO
             receipt.mark_verified(
                 PaymentWithReceipt.VerificationStatus.REJECTED,
                 verified_at=timezone.now(),
             )
             receipt.verified_by = user
             receipt.save()
+
+            purchase = receipt.payment.purchase
+            purchase.status = Purchase.Status.CANCELED  
+            purchase.save()                            
 
         return Response(VerificationReadSerializer(receipt).data)

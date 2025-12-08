@@ -30,7 +30,7 @@ function App() {
         <Route path="/galeria" element={<GaleriaSorteos />} />
         <Route path="/participacion/detalle/:id" element={<ParticipacionDetalle />} />
         <Route path="/galeriaEvidencia" element={<GaleriaEvidencia />} />
-        <Route path="/evidencias/:id" element={<DetalleComprobante />} />
+        <Route path="/verificacion/detalle/:id" element={<DetalleComprobante />} />
         </Route>
 
         

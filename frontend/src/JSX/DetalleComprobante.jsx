@@ -4,25 +4,41 @@ import "../CSS/RuffleDetail.css"; // Reutilizamos tu CSS de detalle
 
 const API_BASE_URL = "http://localhost:8000";
 
+// Función para obtener el token de autenticación
+const getToken = () => localStorage.getItem('authToken'); 
+
+// Función auxiliar para mapear el estado al texto de UI
+const mapStatusToUI = (status) => {
+    switch (status?.toLowerCase()) {
+        case 'approved':
+            return 'APROBADO';
+        case 'rejected':
+            return 'RECHAZADO';
+        case 'pending':
+            return 'Pendiente de Verificación';
+        default:
+            return 'Pendiente de Verificación'; // Estado por defecto
+    }
+}
+
 export default function DetalleComprobante() {
-    // 1. OBTENER DATOS: Usamos useLocation para obtener la 'evidencia' pasada por la tarjeta.
     const location = useLocation();
     const navigate = useNavigate();
     
-    // La evidencia viene en 'location.state.evidencia'. Si no existe, volvemos a la galería.
     const evidencia = location.state?.evidencia; 
 
-    // Estado local para simular la verificación
     const [isLoading, setIsLoading] = useState(false);
-    const [statusLocal, setStatusLocal] = useState(evidencia?.status || "Cargando...");
+    const [statusLocal, setStatusLocal] = useState(mapStatusToUI(evidencia?.status)); 
 
 
     if (!evidencia) {
         return (
-            <div className="error-screen">
-                Error: No se encontraron los detalles de la evidencia.
+            // Pantalla de error más visible si faltan datos
+            <div className="error-screen p-10 text-center bg-red-50 border border-red-300 rounded-lg m-10" style={{maxWidth: '800px', margin: '40px auto'}}>
+                <h2 className="text-xl font-bold text-red-700 mb-4">Error: No se encontraron los detalles de la evidencia.</h2>
+                <p className="text-red-600 mb-4">Esto sucede cuando la tarjeta no pasa los datos correctamente.</p>
                 <button 
-                    className="apartar-btn" 
+                    className="apartar-btn bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded" 
                     onClick={() => navigate('/galeriaEvidencia')}
                 >
                     Volver a la Galería
@@ -31,25 +47,59 @@ export default function DetalleComprobante() {
         );
     }
 
-    // Función de simulación para Aprobar/Rechazar
+    // ✅ FUNCIÓN CORREGIDA: Ahora realiza la llamada a la API
     const handleVerification = async (action) => {
         setIsLoading(true);
-            
-        console.log(`Simulando acción: ${action} para la compra ID: ${evidencia.purchase_id}`);
+        const token = getToken();
+        const paymentId = evidencia.payment_id; // payment_id es el PK de PaymentWithReceipt
+        const actionPayload = { action }; // { action: "approve" } o { action: "reject" }
+
+        if (!token) {
+            alert("Error de Autenticación. Por favor, inicie sesión.");
+            setIsLoading(false);
+            return;
+        }
 
         try {
-            // Simulamos la espera de la API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const newStatus = action === 'approve' ? 'APROBADO' : 'RECHAZADO';
-            setStatusLocal(newStatus);
-            alert(`Pago ${newStatus} exitosamente.`);
+            const response = await fetch(
+                // Endpoint: /api/v1/purchases/verifications/{id}/verify/
+                `${API_BASE_URL}/api/v1/purchases/verifications/${paymentId}/verify/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(actionPayload),
+                }
+            );
 
-            // Opcional: Volver a la galería después de la acción
-            // navigate('/galeriaEvidencia'); 
+            if (!response.ok) {
+                let errorMsg = `Error: ${response.status} ${response.statusText}.`;
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.detail || errorMsg;
+                } catch (e) {
+                    // No es JSON
+                }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            
+            // Actualizar el estado local usando la respuesta de la API
+            const newStatus = mapStatusToUI(data.status); 
+            setStatusLocal(newStatus);
+            
+            if (action === 'approve') {
+                alert(`Pago APROBADO exitosamente. Los boletos están vendidos.`);
+            } else {
+                // Mensaje específico para la acción de rechazo
+                alert(`Pago RECHAZADO exitosamente. Los números han sido liberados.`);
+            }
 
         } catch (error) {
-            alert("Error al procesar la verificación. Inténtalo de nuevo.");
+            alert(`Error al procesar la verificación: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -138,6 +188,7 @@ export default function DetalleComprobante() {
                     </p>
                 </div>
 
+                {/* Los botones solo aparecen si el estado es 'Pendiente de Verificación' */}
                 {statusLocal === 'Pendiente de Verificación' && (
                     <>
                         <button 
@@ -146,7 +197,7 @@ export default function DetalleComprobante() {
                             onClick={() => handleVerification('approve')}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Cargando...' : '✅ Aprobar Pago'}
+                            {isLoading ? 'Cargando...' : 'Aprobar Pago'}
                         </button>
 
                         <button 
@@ -155,7 +206,7 @@ export default function DetalleComprobante() {
                             onClick={() => handleVerification('reject')}
                             disabled={isLoading}
                         >
-                            ❌ Rechazar Pago
+                            Rechazar Pago
                         </button>
                     </>
                 )}
