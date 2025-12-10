@@ -88,8 +88,14 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
         return "closed"
 
 
-class PaymentReceiptSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(required=False, write_only=True)
+class PaymentReceiptSerializer(serializers.Serializer):
+    receipt_image = serializers.ImageField()
+    phone = serializers.CharField()
+    numbers = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+
 
     class Meta:
         model = PaymentWithReceipt
@@ -183,11 +189,14 @@ class VerificationReadSerializer(serializers.ModelSerializer):
         return purchase.guest_name
 
     def get_tickets(self, obj: PaymentWithReceipt) -> list[str]:
-        # Return list of ticket numbers formatted as strings
+        if obj.selected_numbers:
+            return [str(n).zfill(3) for n in obj.selected_numbers]
+        
         return [
             str(detail.number).zfill(3)
             for detail in obj.payment.purchase.details.all()  # type: ignore
         ]
+
 
 
 class PurchaseCancellationSerializer(serializers.Serializer):

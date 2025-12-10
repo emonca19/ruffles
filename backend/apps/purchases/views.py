@@ -139,6 +139,14 @@ class PurchaseViewSet(
         parser_classes=[parsers.MultiPartParser],
         url_path="upload_receipt",
     )
+    
+    @action(
+        detail=True,
+        methods=["post"],
+        serializer_class=PaymentReceiptSerializer,
+        parser_classes=[parsers.MultiPartParser],
+        url_path="upload_receipt",
+    )
     def upload_receipt(self, request: Request, pk: int | None = None) -> Response:
         purchase = get_object_or_404(Purchase, pk=pk)
         user = request.user
@@ -159,18 +167,40 @@ class PurchaseViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create Payment and Receipt
+        receipt_image = serializer.validated_data["receipt_image"]
+        numbers = serializer.validated_data["numbers"]  # 🔹 SOLO los números seleccionados
+
+        # 🔹 Validar que esos números pertenezcan a la compra
+        valid_numbers = set(purchase.details.values_list("number", flat=True))
+        if not set(numbers).issubset(valid_numbers):
+            raise ValidationError(
+                {"numbers": "Los números enviados no pertenecen a esta reservación."}
+            )
+
+        # 🔹 Calcular el monto en base a los números seleccionados
+        first_detail = purchase.details.first()
+        if not first_detail:
+            raise ValidationError("La compra no tiene boletos asociados.")
+
+        price_per_number = first_detail.unit_price
+        amount = len(numbers) * price_per_number
+
+        # 🔹 Crear el pago parcial
         payment = Payment.objects.create(
             purchase=purchase,
-            amount=purchase.total_amount,
+            amount=amount,
             created_by=user if user.is_authenticated else None,
         )
+
+        # 🔹 Guardar el comprobante con SOLO esos números
         PaymentWithReceipt.objects.create(
             payment=payment,
-            receipt_image=serializer.validated_data["receipt_image"],
+            receipt_image=receipt_image,
+            selected_numbers=numbers,
         )
 
         return Response(status=status.HTTP_201_CREATED)
+
 
     @extend_schema(
         tags=["Purchases"],

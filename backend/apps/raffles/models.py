@@ -111,10 +111,9 @@ class Raffle(models.Model):
             )
 
         if self.sale_start_at:
-            hermosillo_tz = ZoneInfo("America/Hermosillo")
-            now_hermosillo = timezone.now().astimezone(hermosillo_tz)
-            start_hermosillo = self.sale_start_at.astimezone(hermosillo_tz)
-
+            start_hermosillo = self.sale_start_at.astimezone(timezone.get_current_timezone())
+            now_hermosillo = timezone.now().astimezone(timezone.get_current_timezone())
+            
             if start_hermosillo.date() < now_hermosillo.date():
                 errors["sale_start_at"] = (
                     "La fecha de inicio de venta no puede ser anterior a hoy (hora de Hermosillo)."

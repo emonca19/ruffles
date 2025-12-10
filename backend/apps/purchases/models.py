@@ -187,6 +187,8 @@ class PaymentWithReceipt(models.Model):
         Payment, on_delete=models.CASCADE, primary_key=True, related_name="receipt"
     )
     receipt_image = models.ImageField(upload_to="receipts/", null=True, blank=True)
+    selected_numbers = models.JSONField(default=list, blank=True)
+
     verification_status = models.CharField(
         max_length=16,
         choices=VerificationStatus.choices,
