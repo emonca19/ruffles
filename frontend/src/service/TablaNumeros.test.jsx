@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import RuffleDetail from '../JSX/RuffleDetail';
+import RuffleDetail from '../JSX/RuffleDetail.jsx';
 import '@testing-library/jest-dom';
 
 // Mock del CSS

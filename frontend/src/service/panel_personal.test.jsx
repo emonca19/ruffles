@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import GaleriaParticipacion from '../JSX/GaleriaParticipacion'
+import GaleriaParticipacion from '../JSX/GaleriaParticipacion.jsx'
 
 // Mock para react-router-dom
 const mockNavigate = vi.fn()

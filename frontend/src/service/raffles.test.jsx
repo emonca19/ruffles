@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 // import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import GaleriaSorteos from '../JSX/GaleriaSorteos';
+import GaleriaSorteos from '../JSX/GaleriaSorteos.jsx';
 
 // Mock de TarjetaSorteo
-vi.mock('../JSX/TarjetaSorteo', () => ({
+vi.mock('../JSX/TarjetaSorteo.jsx', () => ({
   default: vi.fn(({ sorteo }) => (
     <div data-testid={`sorteo-card-${sorteo.id}`} className="sorteo-card">
       <h3>{sorteo.name}</h3>
