@@ -216,7 +216,7 @@ export default function GaleriaEvidencias() {
             ) : error ? (
                 // Mensaje de Error
                 <div className="error-message p-6 bg-red-100 border border-red-400 text-red-700 rounded-lg max-w-3xl mx-auto mb-6 text-center shadow-md">
-                    <p className="font-semibold text-xl mb-3">⚠️ Error al Obtener Evidencias</p>
+                    <p className="font-semibold text-xl mb-3">Error al Obtener Evidencias</p>
                     <p className="font-semibold">{error}</p>
                     {/* Botón de recarga si no es un error de redirección */}
                     {!error.includes("Serás redirigido") && !error.includes("No autenticado") && (
@@ -236,7 +236,7 @@ export default function GaleriaEvidencias() {
                         No hay comprobantes de pago pendientes de verificación en este momento.
                     </p>
                     <p className="text-gray-500 mt-2">
-                        Puedes tomar un descanso. 😉
+                        Puedes tomar un descanso. 
                     </p>
                 </div>
             ) : (
