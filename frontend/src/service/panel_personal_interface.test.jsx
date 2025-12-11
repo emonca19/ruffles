@@ -2,6 +2,7 @@
 //render, lista de sorteos. numeros y estados
 //manejo de estados vacios y errores de carga
 // src/service/panel_personal.test.jsx
+//
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
