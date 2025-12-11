@@ -30,4 +30,6 @@ def test_spanish_error_message():
         print(f"DEBUG: Actual errors: {name_errors}")
         assert any(
             "obligatorio" in str(err) or "requerido" in str(err) for err in name_errors
-        ), f"Expected Spanish error message containing 'obligatorio' or 'requerido', got: {name_errors}"
+        ), (
+            f"Expected Spanish error message containing 'obligatorio' or 'requerido', got: {name_errors}"
+        )

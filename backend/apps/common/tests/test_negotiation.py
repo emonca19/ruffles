@@ -56,6 +56,6 @@ def test_ignore_accept_language_header(client):
 
     # We expect SPANISH because middleware should be gone/disabled
     # "is not a valid choice" (English) vs "no es una elección válida" (Spanish)
-    assert (
-        "elección válida" in action_error or "opción válida" in action_error
-    ), f"Expected Spanish error despite Accept-Language header, got: {action_error}"
+    assert "elección válida" in action_error or "opción válida" in action_error, (
+        f"Expected Spanish error despite Accept-Language header, got: {action_error}"
+    )
