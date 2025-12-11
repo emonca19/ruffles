@@ -28,6 +28,6 @@ def test_spanish_choice_error():
         print(f"DEBUG: Choice errors: {action_errors}")
 
         # "is not a valid choice" -> "no es una opción válida" (standard DRF Spanish)
-        assert any(
-            "válida" in str(err) for err in action_errors
-        ), f"Expected Spanish choice error, got: {action_errors}"
+        assert any("válida" in str(err) for err in action_errors), (
+            f"Expected Spanish choice error, got: {action_errors}"
+        )
