@@ -12,6 +12,7 @@ export default function ParticipacionDetalle() {
   // Estado inicial
   const [detalle, setDetalle] = useState(null);
   const [numerosUsuario, setNumerosUsuario] = useState([]);
+  const [processingNumbers, setProcessingNumbers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,24 +43,20 @@ export default function ParticipacionDetalle() {
           throw new Error("No se encontró participación en esta rifa.");
         }
 
-        // 1. Obtener todos los detalles de la compra
         const allNumerosDetails = (compra.details || []).map((d) => ({
           number: d.number,
-          // Usamos d.status, que debería ser 'Pending', 'Paid', etc.
           status: d.status || "Pending",
         }));
 
-        // 2. FILTRAR para mantener SOLO los boletos que están en estado 'Pending' (Apartado)
         const numerosApartados = allNumerosDetails.filter(
           (detail) => detail.status === "Pending"
-        ); // <-- Debe coincidir con el valor de Django
+        );
 
-        // 3. Ordenar la lista filtrada
         numerosApartados.sort((a, b) => a.number - b.number);
 
         setNumerosUsuario(numerosApartados);
+        setProcessingNumbers(compra.processing_numbers || []);
 
-        // --- Corrección de imagen y otros detalles ---
         let imgUrl = compra.raffle_image;
         if (imgUrl && !imgUrl.startsWith("http")) {
           imgUrl = `${API_BASE_URL}${imgUrl}`;
@@ -67,7 +64,6 @@ export default function ParticipacionDetalle() {
           imgUrl = "https://placehold.co/600x400?text=Sorteo";
         }
 
-        // 5. Establecer el detalle de la rifa para la UI
         setDetalle({
           purchase_id: compra.id,
           raffle_id: compra.raffle_id,
@@ -89,6 +85,7 @@ export default function ParticipacionDetalle() {
   const toggleNumero = (num) => {
     const obj = numerosUsuario.find((n) => n.number === num);
     if (obj?.status === "paid") return;
+    if (processingNumbers.includes(num)) return;
 
     if (seleccionados.includes(num)) {
       setSeleccionados(seleccionados.filter((n) => n !== num));
@@ -143,6 +140,19 @@ export default function ParticipacionDetalle() {
 
         const mensaje =
           errorJson?.detail || "Fallo en el servidor (Revisa logs de Django).";
+
+        if (
+          typeof errorJson?.numbers === "string" &&
+          errorJson.numbers.includes("en proceso")
+        ) {
+          throw new Error(
+            "Algunos números seleccionados ya están en validación. Recarga la página."
+          );
+        } else if (errorJson?.numbers) {
+          const val = Object.values(errorJson.numbers).join(", ");
+          throw new Error(`Error en números: ${val}`);
+        }
+
         throw new Error(`Error ${resp.status}: ${mensaje}`);
       }
 
@@ -152,10 +162,9 @@ export default function ParticipacionDetalle() {
         )}.`
       );
 
-      // Limpieza
       setSeleccionados([]);
       setComprobante(null);
-      window.location.reload(); // Recargar para actualizar la lista
+      window.location.reload();
     } catch (err) {
       console.error("Error en el upload:", err);
       alert(err.message);
@@ -182,7 +191,6 @@ export default function ParticipacionDetalle() {
           headers: {
             "Content-Type": "application/json",
           },
-          // Enviamos el teléfono para la autenticación del invitado en el backend
           body: JSON.stringify({ phone: phone }),
         }
       );
@@ -203,7 +211,6 @@ export default function ParticipacionDetalle() {
 
       alert("Reservación cancelada y números liberados exitosamente.");
 
-      // Recargar para actualizar la vista: ya no habrá números pendientes
       window.location.reload();
     } catch (err) {
       console.error("Error al cancelar la reserva:", err);
@@ -222,7 +229,7 @@ export default function ParticipacionDetalle() {
     return <div className="error-screen">No se pudo cargar el detalle.</div>;
 
   const totalPagar = seleccionados.length * detalle.price;
-  const showCancelButton = numerosUsuario.length > 0; // Mostrar si hay números pendientes
+  const showCancelButton = numerosUsuario.length > 0;
 
   return (
     <div className="ruffle-detail-container">
@@ -279,29 +286,50 @@ export default function ParticipacionDetalle() {
         {numerosUsuario.map((obj) => {
           const isSelected = seleccionados.includes(obj.number);
           const isPaid = obj.status === "paid";
+          const isProcessing = processingNumbers.includes(obj.number);
+
+          let bgColor = "#fff";
+          let textColor = "#333";
+          let borderColor = "#ccc";
+          let cursor = "pointer";
+
+          if (isPaid) {
+            bgColor = "#dcfce7";
+            textColor = "#166534";
+            borderColor = "#86efac";
+            cursor = "default";
+          } else if (isProcessing) {
+            bgColor = "#fef3c7";
+            textColor = "#92400e";
+            borderColor = "#fcd34d";
+            cursor = "default";
+          } else if (isSelected) {
+            bgColor = "var(--detail-accent)";
+            textColor = "#fff";
+            borderColor = "var(--detail-accent)";
+          }
 
           return (
             <button
               key={obj.number}
               className={`numero-btn ${isSelected ? "seleccionado" : ""} ${
                 isPaid ? "ocupado" : ""
-              }`}
+              } ${isProcessing ? "processing" : ""}`}
               style={{
-                backgroundColor: isPaid
-                  ? "#dcfce7"
-                  : isSelected
-                  ? "var(--detail-accent)"
-                  : "#fff",
-                color: isPaid ? "#166534" : isSelected ? "#fff" : "#333",
-                borderColor: isPaid
-                  ? "#86efac"
-                  : isSelected
-                  ? "var(--detail-accent)"
-                  : "#ccc",
-                cursor: isPaid ? "default" : "pointer",
+                backgroundColor: bgColor,
+                color: textColor,
+                borderColor: borderColor,
+                cursor: cursor,
               }}
               onClick={() => toggleNumero(obj.number)}
-              disabled={isPaid}
+              disabled={isPaid || isProcessing}
+              title={
+                isProcessing
+                  ? "Validando pago..."
+                  : isPaid
+                  ? "Pagado"
+                  : "Seleccionar"
+              }
             >
               {obj.number.toString().padStart(3, "0")}
             </button>

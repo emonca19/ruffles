@@ -63,6 +63,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
     )
     raffle_image = serializers.ImageField(source="raffle.image", read_only=True)
     details = PurchaseDetailSerializer(many=True, read_only=True)
+    processing_numbers = serializers.SerializerMethodField()
 
     class Meta:
         model = Purchase
@@ -80,6 +81,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
             "guest_name",
             "guest_phone",
             "raffle_image",
+            "processing_numbers",
         ]
 
     def get_raffle_status(self, obj: Purchase) -> str:
@@ -89,6 +91,18 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
         if obj.raffle.is_on_sale:
             return "selling"
         return "closed"
+
+    def get_processing_numbers(self, obj: Purchase) -> list[int]:
+        processing = set()
+        for payment in obj.payments.all():  # type: ignore
+            if hasattr(payment, "receipt"):
+                receipt = payment.receipt
+                if (
+                    receipt.verification_status
+                    == PaymentWithReceipt.VerificationStatus.PENDING
+                ):
+                    processing.update(receipt.selected_numbers)
+        return sorted(processing)
 
 
 class PaymentReceiptSerializer(serializers.Serializer):

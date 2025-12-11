@@ -65,6 +65,7 @@ class Purchase(models.Model):
         blank=True,
     )
     details: models.QuerySet[PurchaseDetail]  # type: ignore
+    payments: models.QuerySet[Payment]  # type: ignore
     guest_name = models.CharField(max_length=255, blank=True, default="")
     guest_phone = models.CharField(max_length=20, blank=True, default="")
     guest_email = models.EmailField(blank=True, default="")
@@ -177,6 +178,7 @@ class Payment(models.Model):
     amount = models.DecimalField(
         max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
+    receipt: PaymentWithReceipt  # type: ignore
     payment_date = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(

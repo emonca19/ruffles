@@ -167,18 +167,31 @@ class PurchaseViewSet(
         serializer.is_valid(raise_exception=True)
 
         receipt_image = serializer.validated_data["receipt_image"]
-        numbers = serializer.validated_data[
-            "numbers"
-        ]  # 🔹 SOLO los números seleccionados
+        numbers = serializer.validated_data["numbers"]
 
-        # 🔹 Validar que esos números pertenezcan a la compra
         valid_numbers = set(purchase.details.values_list("number", flat=True))
         if not set(numbers).issubset(valid_numbers):
             raise ValidationError(
                 {"numbers": "Los números enviados no pertenecen a esta reservación."}
             )
 
-        # 🔹 Calcular el monto en base a los números seleccionados
+        pending_receipts = PaymentWithReceipt.objects.filter(
+            payment__purchase=purchase,
+            verification_status=PaymentWithReceipt.VerificationStatus.PENDING,
+        )
+        processing_numbers = set()
+        for receipt in pending_receipts:
+            processing_numbers.update(receipt.selected_numbers)
+
+        already_processing = set(numbers).intersection(processing_numbers)
+        if already_processing:
+            sorted_dups = sorted(already_processing)
+            raise ValidationError(
+                {
+                    "numbers": f"Los siguientes números ya se encuentran en proceso de verificación: {sorted_dups}"
+                }
+            )
+
         first_detail = purchase.details.first()
         if not first_detail:
             raise ValidationError("La compra no tiene boletos asociados.")
@@ -186,7 +199,6 @@ class PurchaseViewSet(
         price_per_number = first_detail.unit_price
         amount = len(numbers) * price_per_number
 
-        # 🔹 Crear el pago parcial
         payment = Payment.objects.create(
             purchase=purchase,
             amount=amount,
@@ -284,7 +296,7 @@ class PurchaseViewSet(
                         verified_at=timezone.now(),
                     )
                     if user.is_authenticated:
-                        receipt.verified_by = user
+                        receipt.verified_by = cast("User", user)
                         receipt.save(update_fields=["verified_by"])
             except PaymentWithReceipt.DoesNotExist:
                 continue
@@ -370,10 +382,8 @@ class VerificationViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         action_val = serializer.validated_data["action"]
 
-        # 🌟🌟🌟 CORRECCIÓN 1: Definir 'purchase' (solución del 500 anterior) 🌟🌟🌟
         purchase = receipt.payment.purchase
 
-        # 🌟🌟🌟 CORRECCIÓN 2: Obtener los números del modelo PaymentWithReceipt 🌟🌟🌟
         # Estos son los números que el usuario subió con ese comprobante específico.
         selected_numbers = receipt.selected_numbers
 
