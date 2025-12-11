@@ -62,10 +62,13 @@ class TestDuplicateReceiptUpload:
 
         from django.core.files.uploadedfile import SimpleUploadedFile
 
-        # Minimal valid JPEG header
-        dummy_jpeg = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\xff\xc0\x00\x11\x08\x00\n\x00\n\x03\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x1f\x00\x00\x01\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xbf"
+        # Known valid minimal GIF (from test_payment_upload.py)
+        # Even if we name it .jpg, Pillow detects the content.
+        dummy_image_content = b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
 
-        file = SimpleUploadedFile("receipt.jpg", dummy_jpeg, content_type="image/jpeg")
+        file = SimpleUploadedFile(
+            "receipt.jpg", dummy_image_content, content_type="image/jpeg"
+        )
 
         data_1 = {
             "phone": "1234567890",
@@ -78,7 +81,7 @@ class TestDuplicateReceiptUpload:
 
         # 3. Attempt to upload receipt for number 10 AGAIN
         file2 = SimpleUploadedFile(
-            "receipt2.jpg", dummy_jpeg, content_type="image/jpeg"
+            "receipt2.jpg", dummy_image_content, content_type="image/jpeg"
         )
 
         data_2 = {
@@ -117,17 +120,12 @@ class TestDuplicateReceiptUpload:
         # 2. Upload receipt for number 30
         url_upload = reverse("purchase-upload-receipt", args=[purchase_id])
 
-        from io import BytesIO
-
         from django.core.files.uploadedfile import SimpleUploadedFile
 
-        from PIL import Image
+        dummy_image_content = b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
 
-        img_io = BytesIO()
-        Image.new("RGB", (100, 100), color="blue").save(img_io, format="JPEG")
-        img_io.seek(0)
         file = SimpleUploadedFile(
-            "receipt.jpg", img_io.read(), content_type="image/jpeg"
+            "receipt.jpg", dummy_image_content, content_type="image/jpeg"
         )
 
         data_1 = {
@@ -140,9 +138,8 @@ class TestDuplicateReceiptUpload:
         assert resp_upload_1.status_code == status.HTTP_201_CREATED
 
         # 3. Upload receipt for number 40 (Different number)
-        img_io.seek(0)
         file2 = SimpleUploadedFile(
-            "receipt2.jpg", img_io.read(), content_type="image/jpeg"
+            "receipt2.jpg", dummy_image_content, content_type="image/jpeg"
         )
 
         data_2 = {
