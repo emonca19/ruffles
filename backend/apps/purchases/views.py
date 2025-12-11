@@ -193,14 +193,38 @@ class PurchaseViewSet(
             created_by=user if user.is_authenticated else None,
         )
 
-        # 🔹 Guardar el comprobante con SOLO esos números
         PaymentWithReceipt.objects.create(
             payment=payment,
             receipt_image=receipt_image,
             selected_numbers=numbers,
         )
 
-        return Response(status=status.HTTP_201_CREATED)
+        all_numbers = set(purchase.details.values_list("number", flat=True))
+
+        paid_numbers = set(
+            purchase.details.filter(status=Purchase.Status.PAID).values_list(
+                "number", flat=True
+            )
+        )
+
+        pending_receipts = PaymentWithReceipt.objects.filter(
+            payment__purchase=purchase,
+            verification_status=PaymentWithReceipt.VerificationStatus.PENDING,
+        )
+        processing_numbers = set()
+        for receipt in pending_receipts:
+            processing_numbers.update(receipt.selected_numbers)
+
+        remaining_numbers = list(all_numbers - paid_numbers - processing_numbers)
+        remaining_numbers.sort()
+
+        return Response(
+            {
+                "detail": "Comprobante subido exitosamente.",
+                "remaining_numbers": remaining_numbers,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     @extend_schema(
         tags=["Purchases"],

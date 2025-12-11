@@ -73,11 +73,31 @@ class TestPaymentUpload:
         self, api_client, user, user_purchase, image_file
     ):
         """Authenticated user can upload receipt for their purchase."""
+        # Setup detail
+        from apps.purchases.models import Purchase, PurchaseDetail
+
+        PurchaseDetail.objects.create(
+            purchase=user_purchase,
+            number=1,
+            unit_price=10.0,
+            status=Purchase.Status.PENDING,
+        )
+
         api_client.force_authenticate(user=user)
         url = reverse("purchase-upload-receipt", args=[user_purchase.id])
 
+        # IMPORTANT: DRF TestClient (and standard HTML forms) sends list in multipart as repeated keys.
+        # But requests library or some clients might do it differently.
+        # APIClient handles checks. If we pass list [1], it might json-encode or send multiple "numbers" fields.
+        # Let's verify what works. Usually `numbers` should be sent as scalar if len=1 or list if handled by client.
         response = api_client.post(
-            url, {"receipt_image": image_file}, format="multipart"
+            url,
+            {
+                "receipt_image": image_file,
+                "numbers": [1],  # Passes list
+                "phone": "9999999999",
+            },
+            format="multipart",
         )
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -88,11 +108,20 @@ class TestPaymentUpload:
 
     def test_upload_receipt_guest(self, api_client, guest_purchase, image_file):
         """Guest can upload receipt using matching phone number."""
+        from apps.purchases.models import Purchase, PurchaseDetail
+
+        PurchaseDetail.objects.create(
+            purchase=guest_purchase,
+            number=5,
+            unit_price=10.0,
+            status=Purchase.Status.PENDING,
+        )
+
         url = reverse("purchase-upload-receipt", args=[guest_purchase.id])
 
         response = api_client.post(
             url,
-            {"receipt_image": image_file, "phone": "1234567890"},
+            {"receipt_image": image_file, "phone": "1234567890", "numbers": [5]},
             format="multipart",
         )
 
@@ -107,7 +136,11 @@ class TestPaymentUpload:
 
         response = api_client.post(
             url,
-            {"receipt_image": image_file, "phone": "0000000000"},
+            {
+                "receipt_image": image_file,
+                "phone": "0000000000",
+                "numbers": [99],
+            },  # numbers valid or invalid doesn't matter for 403, but good to format correct
             format="multipart",
         )
 
@@ -118,7 +151,7 @@ class TestPaymentUpload:
         api_client.force_authenticate(user=user)
         url = reverse("purchase-upload-receipt", args=[user_purchase.id])
 
-        response = api_client.post(url, {}, format="multipart")
+        response = api_client.post(url, {"numbers": [1]}, format="multipart")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -130,8 +163,63 @@ class TestPaymentUpload:
         text_file = SimpleUploadedFile(
             "test.txt", b"content", content_type="text/plain"
         )
+        # numbers required
         response = api_client.post(
-            url, {"receipt_image": text_file}, format="multipart"
+            url, {"receipt_image": text_file, "numbers": [1]}, format="multipart"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_upload_receipt_returns_remaining_numbers(
+        self, api_client, user, user_purchase, image_file
+    ):
+        """Response includes list of remaining unpaid numbers."""
+        from apps.purchases.models import Purchase, PurchaseDetail
+
+        # 1. Setup details: 1, 2, 3
+        # user_purchase might serve for other tests, so let's make sure we don't duplicate if fixture shared scope is function (default).
+        # Yes, fixture is function scope.
+
+        PurchaseDetail.objects.create(
+            purchase=user_purchase,
+            number=1,
+            unit_price=10.0,
+            status=Purchase.Status.PENDING,
+        )
+        PurchaseDetail.objects.create(
+            purchase=user_purchase,
+            number=2,
+            unit_price=10.0,
+            status=Purchase.Status.PENDING,
+        )
+        PurchaseDetail.objects.create(
+            purchase=user_purchase,
+            number=3,
+            unit_price=10.0,
+            status=Purchase.Status.PENDING,
+        )
+
+        api_client.force_authenticate(user=user)
+        url = reverse("purchase-upload-receipt", args=[user_purchase.id])
+
+        # 2. Upload receipt for number 1
+        # Multipart sending list of int: DRF test client handles [1] correctly by sending `numbers`=1.
+        # But since Child is IntegerField, it accepts it.
+
+        response = api_client.post(
+            url,
+            {
+                "receipt_image": image_file,
+                "numbers": [1],  # Passes list
+                "phone": "9999999999",
+            },
+            format="multipart",
+        )
+
+        # No debug print
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert "remaining_numbers" in response.data
+
+        # We paid for 1. Remaining should be 2, 3.
+        assert response.data["remaining_numbers"] == [2, 3]
