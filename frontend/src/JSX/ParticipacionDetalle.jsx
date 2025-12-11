@@ -40,7 +40,30 @@ export default function ParticipacionDetalle() {
                     throw new Error("No se encontró participación en esta rifa.");
                 }
 
-                // --- CORRECCIÓN DE IMAGEN ---
+                // 1. Obtener todos los detalles de la compra (ahora incluyendo el status del backend)
+                const allNumerosDetails = (compra.details || []).map(d => ({
+                    number: d.number,
+                    // Usamos d.status directamente, que debería ser 'Pending', 'Paid', etc.
+                    status: d.status || 'Pending' 
+                }));
+
+                // 2. FILTRAR para mantener SOLO los boletos que están en estado 'Pending' (Apartado)
+                const numerosApartados = allNumerosDetails
+                    .filter(detail => detail.status === 'Pending'); // <-- Debe coincidir con el valor de Django
+
+                // 3. Ordenar la lista filtrada
+                numerosApartados.sort((a, b) => a.number - b.number);
+                
+                // 4. Establecer el estado de los boletos SOLO con la lista FILTRADA
+                setNumerosUsuario(numerosApartados); // setNumerosUsuario ahora tiene objetos {number: N, status: 'Pending'}
+
+                // *******************************************************************
+                // CORRECCIÓN: Estaba sobrescribiendo setNumerosUsuario con solo números (el bloque anterior)
+                // y luego con objetos {number, status: 'pending'} para TODOS (el bloque siguiente)
+                // Vamos a asegurarnos de que el estado `detalle` se establezca correctamente.
+                // *******************************************************************
+
+                // --- Corrección de imagen y otros detalles ---
                 let imgUrl = compra.raffle_image;
                 if (imgUrl && !imgUrl.startsWith('http')) {
                     imgUrl = `${API_BASE_URL}${imgUrl}`;
@@ -48,22 +71,31 @@ export default function ParticipacionDetalle() {
                     imgUrl = "https://placehold.co/600x400?text=Sorteo";
                 }
 
+                // 5. Establecer el detalle de la rifa para la UI
                 setDetalle({
                     purchase_id: compra.id,
                     raffle_id: compra.raffle_id,
                     raffle_name: compra.raffle_name,
                     image_url: imgUrl,
-                    price: parseFloat(compra.details?.[0]?.unit_price || 0),
+                    // Asegúrate de usar la propiedad del primer detalle si la necesitas para el precio
+                    price: parseFloat(compra.details?.[0]?.unit_price || 0), 
                 });
 
-                // Cargar números
+                // *******************************************************************
+                // Importante: Eliminar el bloque de código incorrecto que estaba abajo:
+                /*
+                // Líneas originales INCORRECTAS que deben borrarse:
+                // Cargar números (esto sobrescribe el filtro que hiciste arriba)
                 const numeros = (compra.details || []).map(d => ({
                     number: d.number,
-                    status: "pending" 
+                    status: "pending" // <-- HARDCODEADO E INCORRECTO
                 }));
 
                 numeros.sort((a, b) => a.number - b.number);
-                setNumerosUsuario(numeros);
+                setNumerosUsuario(numeros); // <-- ESTO REEMPLAZA LOS BOLETOS APARTADOS POR TODOS
+                */
+                // *******************************************************************
+
 
             } catch (err) {
                 console.error(err);

@@ -47,9 +47,12 @@ class ReservationSerializer(serializers.Serializer):
 
 
 class PurchaseDetailSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source='get_status_display', read_only=True)
+
     class Meta:
         model = PurchaseDetail
-        fields: ClassVar[list[str]] = ["number", "unit_price"]
+        # Incluir 'status' en los fields
+        fields: ClassVar[list[str]] = ["number", "unit_price", "status"]
 
 
 class PurchaseReadSerializer(serializers.ModelSerializer):

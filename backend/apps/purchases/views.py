@@ -300,8 +300,10 @@ class VerificationViewSet(viewsets.GenericViewSet):
 
     def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "verify":
-            return VerificationActionSerializer
-        return VerificationReadSerializer
+            # Debería devolver la clase real, no un placeholder
+            return VerificationActionSerializer 
+        # Debería devolver la clase real, no un placeholder
+        return VerificationReadSerializer 
 
     def get_queryset(self) -> QuerySet[PaymentWithReceipt]:
         user = cast("User", self.request.user)
@@ -342,28 +344,36 @@ class VerificationViewSet(viewsets.GenericViewSet):
     def verify(self, request: Request, pk: int | None = None) -> Response:
         user = cast("User", request.user)
         if user.user_type != "organizer":
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_403_FORBIDDEN) # Error 403 si no es organizador
 
+        # 1. Obtener el comprobante (receipt)
         receipt = get_object_or_404(PaymentWithReceipt, pk=pk)
 
+        # 2. Validar datos de la acción (approve/reject)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         action_val = serializer.validated_data["action"]
 
+        # 🌟🌟🌟 CORRECCIÓN 1: Definir 'purchase' (solución del 500 anterior) 🌟🌟🌟
+        purchase = receipt.payment.purchase
+        
+        # 🌟🌟🌟 CORRECCIÓN 2: Obtener los números del modelo PaymentWithReceipt 🌟🌟🌟
+        # Estos son los números que el usuario subió con ese comprobante específico.
+        selected_numbers = receipt.selected_numbers
+        
+        # Aseguramos que sea una lista/iterable
+        if not isinstance(selected_numbers, list):
+             selected_numbers = []
+
+
         if action_val == "approve":
             # 1. Update status of selected numbers to PAID
-            selected_numbers = receipt.selected_numbers
+            if selected_numbers: # Solo actualiza si hay números seleccionados
+                purchase.details.filter(number__in=selected_numbers).update(
+                    status=Purchase.Status.PAID
+                )
 
-            # Use filter to update efficiently
-            receipt.payment.purchase.details.filter(number__in=selected_numbers).update(
-                status=Purchase.Status.PAID
-            )
-
-            # 2. Update status of UNSELECTED numbers to CANCELED (release them)
-            receipt.payment.purchase.details.exclude(
-                number__in=selected_numbers
-            ).update(status=Purchase.Status.CANCELED)
-
+            # 2. Marcar el comprobante como APROBADO
             receipt.mark_verified(
                 PaymentWithReceipt.VerificationStatus.APPROVED,
                 verified_at=timezone.now(),
@@ -372,7 +382,7 @@ class VerificationViewSet(viewsets.GenericViewSet):
             receipt.save()
 
             # 3. Sync parent purchase status
-            receipt.payment.purchase.update_status_from_details()
+            purchase.update_status_from_details()
 
         elif action_val == "reject":
             # 1. Marcar el comprobante como RECHAZADO
@@ -383,11 +393,14 @@ class VerificationViewSet(viewsets.GenericViewSet):
             receipt.verified_by = user
             receipt.save()
 
-            # 2. Cancel ALL details associated with this purchase (or specifically this payment context??)
-            # Generally if a receipt is rejected, the purchase is dead unless they upload another one.
-            # But usually rejection implies releasing the numbers.
-            receipt.payment.purchase.details.update(status=Purchase.Status.CANCELED)
+            # 2. Revertir los números seleccionados en ESTE comprobante a PENDING (Apartado).
+            if selected_numbers: # Solo revierte si hay números seleccionados
+                purchase.details.filter(number__in=selected_numbers).update(
+                    status=Purchase.Status.PENDING 
+                )
 
-            receipt.payment.purchase.update_status_from_details()
+            # 3. Sincronizar el estado de la compra padre
+            purchase.update_status_from_details()
 
+        # 4. Devolver la respuesta
         return Response(VerificationReadSerializer(receipt).data)
