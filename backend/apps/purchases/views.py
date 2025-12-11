@@ -255,19 +255,25 @@ class PurchaseViewSet(
             raise PermissionDenied("No tienes permiso para cancelar esta reservación.")
 
         # Validation
-        if purchase.status == Purchase.Status.PAID:
-            raise ValidationError("No se puede cancelar una compra pagada.")
+        has_pending_details = purchase.details.filter(
+            status=Purchase.Status.PENDING
+        ).exists()
 
-        # Idempotency / Action
-        if purchase.status == Purchase.Status.CANCELED:
-            return Response(
-                {"detail": "La compra ya fue cancelada."}, status=status.HTTP_200_OK
-            )
+        if not has_pending_details:
+            # Idempotency
+            if purchase.status == Purchase.Status.CANCELED:
+                return Response(
+                    {"detail": "La compra ya fue cancelada."}, status=status.HTTP_200_OK
+                )
+            # Fully paid check
+            if purchase.status == Purchase.Status.PAID:
+                raise ValidationError(
+                    "No se puede cancelar una compra totalmente pagada."
+                )
 
-        # Reject any pending payment receipts to release the reservation cleanly.
+        # Reject any pending payment receipts
         for payment in purchase.payments.all():  # type: ignore
             try:
-                # Access OneToOne related receipt
                 receipt = payment.receipt
                 if (
                     receipt.verification_status
@@ -281,9 +287,12 @@ class PurchaseViewSet(
                         receipt.verified_by = user
                         receipt.save(update_fields=["verified_by"])
             except PaymentWithReceipt.DoesNotExist:
-                continue  # Payment has no receipt (e.g., online payment or incomplete)
+                continue
 
-        purchase.details.update(status=Purchase.Status.CANCELED)
+        # Only cancel PENDING tickets.
+        purchase.details.filter(status=Purchase.Status.PENDING).update(
+            status=Purchase.Status.CANCELED
+        )
 
         # Clear prefetch cache to ensure update_status_from_details sees the DB changes
         if hasattr(purchase, "_prefetched_objects_cache"):

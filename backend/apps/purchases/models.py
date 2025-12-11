@@ -41,6 +41,8 @@ class PurchaseManager(models.Manager["Purchase"]):
 
 
 class Purchase(models.Model):
+    id: int
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         PAID = "paid", "Paid"
