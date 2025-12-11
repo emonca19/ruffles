@@ -40,10 +40,10 @@ export default function ParticipacionDetalle() {
                     throw new Error("No se encontró participación en esta rifa.");
                 }
 
-                // 1. Obtener todos los detalles de la compra (ahora incluyendo el status del backend)
+                // 1. Obtener todos los detalles de la compra
                 const allNumerosDetails = (compra.details || []).map(d => ({
                     number: d.number,
-                    // Usamos d.status directamente, que debería ser 'Pending', 'Paid', etc.
+                    // Usamos d.status, que debería ser 'Pending', 'Paid', etc.
                     status: d.status || 'Pending' 
                 }));
 
@@ -54,14 +54,7 @@ export default function ParticipacionDetalle() {
                 // 3. Ordenar la lista filtrada
                 numerosApartados.sort((a, b) => a.number - b.number);
                 
-                // 4. Establecer el estado de los boletos SOLO con la lista FILTRADA
-                setNumerosUsuario(numerosApartados); // setNumerosUsuario ahora tiene objetos {number: N, status: 'Pending'}
-
-                // *******************************************************************
-                // CORRECCIÓN: Estaba sobrescribiendo setNumerosUsuario con solo números (el bloque anterior)
-                // y luego con objetos {number, status: 'pending'} para TODOS (el bloque siguiente)
-                // Vamos a asegurarnos de que el estado `detalle` se establezca correctamente.
-                // *******************************************************************
+                setNumerosUsuario(numerosApartados);
 
                 // --- Corrección de imagen y otros detalles ---
                 let imgUrl = compra.raffle_image;
@@ -77,25 +70,8 @@ export default function ParticipacionDetalle() {
                     raffle_id: compra.raffle_id,
                     raffle_name: compra.raffle_name,
                     image_url: imgUrl,
-                    // Asegúrate de usar la propiedad del primer detalle si la necesitas para el precio
                     price: parseFloat(compra.details?.[0]?.unit_price || 0), 
                 });
-
-                // *******************************************************************
-                // Importante: Eliminar el bloque de código incorrecto que estaba abajo:
-                /*
-                // Líneas originales INCORRECTAS que deben borrarse:
-                // Cargar números (esto sobrescribe el filtro que hiciste arriba)
-                const numeros = (compra.details || []).map(d => ({
-                    number: d.number,
-                    status: "pending" // <-- HARDCODEADO E INCORRECTO
-                }));
-
-                numeros.sort((a, b) => a.number - b.number);
-                setNumerosUsuario(numeros); // <-- ESTO REEMPLAZA LOS BOLETOS APARTADOS POR TODOS
-                */
-                // *******************************************************************
-
 
             } catch (err) {
                 console.error(err);
@@ -167,6 +143,7 @@ export default function ParticipacionDetalle() {
             // Limpieza
             setSeleccionados([]);
             setComprobante(null);
+            window.location.reload(); // Recargar para actualizar la lista
 
         } catch (err) {
             console.error("Error en el upload:", err);
@@ -174,11 +151,59 @@ export default function ParticipacionDetalle() {
         }
     };
 
+    const handleCancelReservation = async () => {
+    if (!detalle?.purchase_id) {
+        alert("Error: ID de compra no encontrado. Intenta recargar.");
+        return;
+    }
+
+    const confirmacion = window.confirm(
+        `¿Estás seguro de que quieres cancelar esta reservación y liberar los ${numerosUsuario.length} números apartados? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+        const resp = await fetch(
+            `${API_BASE_URL}/api/v1/purchases/${detalle.purchase_id}/cancel/`,
+            {
+                method: "POST", 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                // Enviamos el teléfono para la autenticación del invitado en el backend
+                body: JSON.stringify({ phone: phone }),
+            }
+        );
+
+        if (!resp.ok) {
+            const errorText = await resp.text();
+            let errorJson;
+            try { errorJson = JSON.parse(errorText); } catch(e) {}
+            
+            const mensaje = errorJson?.detail || "Fallo en el servidor al cancelar.";
+            throw new Error(`Error ${resp.status}: ${mensaje}`);
+        }
+
+        alert("Reservación cancelada y números liberados exitosamente.");
+        
+        // Recargar para actualizar la vista: ya no habrá números pendientes
+        window.location.reload(); 
+
+    } catch (err) {
+        console.error("Error al cancelar la reserva:", err);
+        alert(err.message);
+    }
+};
+
+
     if (isLoading) return <div className="loading-screen"><div className="spinner"></div></div>;
     if (error) return <div className="error-screen">{error}</div>;
     if (!detalle) return <div className="error-screen">No se pudo cargar el detalle.</div>;
 
     const totalPagar = seleccionados.length * detalle.price;
+    const showCancelButton = numerosUsuario.length > 0; // Mostrar si hay números pendientes
+
 
     return (
         <div className="ruffle-detail-container">
@@ -224,7 +249,7 @@ export default function ParticipacionDetalle() {
             
             <h2 style={{ textAlign: "center", marginBottom: "15px" }}>Tus números</h2>
 
-            <div className="numeros-grid" style={{ maxHeight: "none", marginBottom: "100px" }}>
+            <div className="numeros-grid" style={{ maxHeight: "none", marginBottom: "30px" }}>
                 {numerosUsuario.map(obj => {
                     const isSelected = seleccionados.includes(obj.number);
                     const isPaid = obj.status === "paid";
@@ -248,7 +273,26 @@ export default function ParticipacionDetalle() {
                 })}
             </div>
 
-            {/* BARRA FLOTANTE (Solo visible si hay selección) */}
+            {showCancelButton && seleccionados.length === 0 && (
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <button
+                        className="apartar-btn"
+                        onClick={handleCancelReservation}
+                        style={{
+                            backgroundColor: '#dc2626', // Rojo para cancelar/liberar
+                            color: '#fff',
+                            padding: '10px 20px',
+                            borderRadius: '5px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.3s'
+                        }}
+                    >
+                        ❌ Liberar y cancelar mi reservación
+                    </button>
+                </div>
+            )}
+
             {seleccionados.length > 0 && (
                 <div className="checkout-bar" style={{flexDirection: 'column', gap: '10px', padding: '20px', borderRadius: '20px'}}>
                     
@@ -296,7 +340,6 @@ export default function ParticipacionDetalle() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }

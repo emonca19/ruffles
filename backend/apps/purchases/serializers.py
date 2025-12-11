@@ -94,7 +94,11 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
 class PaymentReceiptSerializer(serializers.Serializer):
     receipt_image = serializers.ImageField()
     phone = serializers.CharField()
-    numbers = serializers.ListField(child=serializers.IntegerField(), required=True)
+    numbers = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+
 
     class Meta:
         model = PaymentWithReceipt
@@ -190,11 +194,12 @@ class VerificationReadSerializer(serializers.ModelSerializer):
     def get_tickets(self, obj: PaymentWithReceipt) -> list[str]:
         if obj.selected_numbers:
             return [str(n).zfill(3) for n in obj.selected_numbers]
-
+        
         return [
             str(detail.number).zfill(3)
             for detail in obj.payment.purchase.details.all()  # type: ignore
         ]
+
 
 
 class PurchaseCancellationSerializer(serializers.Serializer):

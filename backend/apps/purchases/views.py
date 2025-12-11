@@ -283,6 +283,7 @@ class PurchaseViewSet(
             except PaymentWithReceipt.DoesNotExist:
                 continue  # Payment has no receipt (e.g., online payment or incomplete)
 
+            
         purchase.details.update(status=Purchase.Status.CANCELED)
         purchase.update_status_from_details()
 
