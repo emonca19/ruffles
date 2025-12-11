@@ -9,7 +9,7 @@ const getToken = () => localStorage.getItem('authToken');
 
 // Función auxiliar para mapear el estado al texto de UI
 const mapStatusToUI = (status) => {
-  switch (status?.toLowerCase()) {
+    switch (status?.toLowerCase()) {
     case 'approved':
       return 'APROBADO';
     case 'rejected':
