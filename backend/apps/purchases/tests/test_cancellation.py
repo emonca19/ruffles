@@ -124,6 +124,7 @@ class TestCancellation:
         """Validation: Cannot cancel a purchase that is already PAID."""
         pending_purchase.status = Purchase.Status.PAID
         pending_purchase.save()
+        pending_purchase.details.update(status=Purchase.Status.PAID)
 
         api_client.force_authenticate(user=organizer_user)
         url = reverse("purchase-cancel", args=[pending_purchase.id])
