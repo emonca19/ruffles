@@ -90,7 +90,7 @@ const TarjetaEvidencia = ({ evidencia }) => {
                             className={`raffle-participar-btn w-full mt-3 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-250 shadow-md transform hover:translate-y-[-2px]`}
                             onClick={(e) => {
                                 e.stopPropagation(); 
-                                // ✅ Solución: Pasando el objeto 'evidencia' completo al hacer clic en el botón.
+                                //Pasando el objeto 'evidencia' completo al hacer clic en el botón.
                                 evidencia.payment_id && navigate(`/verificacion/detalle/${evidencia.payment_id}`, { state: { evidencia } });
                             }}
                         >

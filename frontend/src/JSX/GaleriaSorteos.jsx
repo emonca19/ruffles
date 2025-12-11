@@ -10,16 +10,13 @@ export default function GaleriaSorteos() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
     const token = localStorage.getItem('authToken');
     const esOrganizador = !!token;
     const vista = esOrganizador ? 'organizador' : 'visitante';
-
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         window.location.reload();
     };
-
     useEffect(() => {
         const fetchSorteos = async () => {
             setIsLoading(true);
@@ -66,9 +63,7 @@ export default function GaleriaSorteos() {
                     image_url: item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`) : 'https://via.placeholder.com/300x200?text=Sin+Imagen',
                     price_per_number: item.price_per_number || 0
                 }));
-
                 setSorteos(sorteosAdaptados);
-
             } catch (err) {
                 console.error("Error:", err);
                 setError(err.message);
@@ -76,11 +71,8 @@ export default function GaleriaSorteos() {
                 setIsLoading(false);
             }
         };
-
         fetchSorteos();
     }, [vista, token]);
-
-
     if (isLoading) {
         return (
             <div className="raffle-loading">

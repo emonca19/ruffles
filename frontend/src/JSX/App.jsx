@@ -32,7 +32,6 @@ function App() {
         <Route path="/galeriaEvidencia" element={<GaleriaEvidencia />} />
         <Route path="/verificacion/detalle/:id" element={<DetalleComprobante />} /> {/* ACPETAR/RECHAZAR rganizador */}
         </Route>
-
         
         <Route path="/login" element={<Login />} />
       </Routes>

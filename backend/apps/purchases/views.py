@@ -283,7 +283,6 @@ class PurchaseViewSet(
             except PaymentWithReceipt.DoesNotExist:
                 continue  # Payment has no receipt (e.g., online payment or incomplete)
 
-            
         purchase.details.update(status=Purchase.Status.CANCELED)
         purchase.update_status_from_details()
 
@@ -302,9 +301,9 @@ class VerificationViewSet(viewsets.GenericViewSet):
     def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "verify":
             # Debería devolver la clase real, no un placeholder
-            return VerificationActionSerializer 
+            return VerificationActionSerializer
         # Debería devolver la clase real, no un placeholder
-        return VerificationReadSerializer 
+        return VerificationReadSerializer
 
     def get_queryset(self) -> QuerySet[PaymentWithReceipt]:
         user = cast("User", self.request.user)
@@ -345,7 +344,9 @@ class VerificationViewSet(viewsets.GenericViewSet):
     def verify(self, request: Request, pk: int | None = None) -> Response:
         user = cast("User", request.user)
         if user.user_type != "organizer":
-            return Response(status=status.HTTP_403_FORBIDDEN) # Error 403 si no es organizador
+            return Response(
+                status=status.HTTP_403_FORBIDDEN
+            )  # Error 403 si no es organizador
 
         # 1. Obtener el comprobante (receipt)
         receipt = get_object_or_404(PaymentWithReceipt, pk=pk)
@@ -357,19 +358,18 @@ class VerificationViewSet(viewsets.GenericViewSet):
 
         # 🌟🌟🌟 CORRECCIÓN 1: Definir 'purchase' (solución del 500 anterior) 🌟🌟🌟
         purchase = receipt.payment.purchase
-        
+
         # 🌟🌟🌟 CORRECCIÓN 2: Obtener los números del modelo PaymentWithReceipt 🌟🌟🌟
         # Estos son los números que el usuario subió con ese comprobante específico.
         selected_numbers = receipt.selected_numbers
-        
+
         # Aseguramos que sea una lista/iterable
         if not isinstance(selected_numbers, list):
-             selected_numbers = []
-
+            selected_numbers = []
 
         if action_val == "approve":
             # 1. Update status of selected numbers to PAID
-            if selected_numbers: # Solo actualiza si hay números seleccionados
+            if selected_numbers:  # Solo actualiza si hay números seleccionados
                 purchase.details.filter(number__in=selected_numbers).update(
                     status=Purchase.Status.PAID
                 )
@@ -395,9 +395,9 @@ class VerificationViewSet(viewsets.GenericViewSet):
             receipt.save()
 
             # 2. Revertir los números seleccionados en ESTE comprobante a PENDING (Apartado).
-            if selected_numbers: # Solo revierte si hay números seleccionados
+            if selected_numbers:  # Solo revierte si hay números seleccionados
                 purchase.details.filter(number__in=selected_numbers).update(
-                    status=Purchase.Status.PENDING 
+                    status=Purchase.Status.PENDING
                 )
 
             # 3. Sincronizar el estado de la compra padre
