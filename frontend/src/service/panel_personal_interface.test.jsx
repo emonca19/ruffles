@@ -54,15 +54,7 @@ describe('HU-4: Pruebas Funcionales Panel Personal', () => {
     })
   }
 
-  // Helper para mock con error HTTP
-  const mockErrorFetch = (status = 500, errorText = '') => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      status,
-      text: async () => errorText || ''
-    })
-  }
-
+  
   describe('Escenario 1: Validaciones del formulario', () => {
     it('El botón debe estar deshabilitado con número corto', async () => {
       renderComponent()
