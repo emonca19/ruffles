@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import GaleriaParticipacion from '../JSX/GaleriaParticipacion'
+import ParticipacionSorteos from "../JSX/ParticipacionSorteos.jsx";
 
 // Mock para react-router-dom
 const mockNavigate = vi.fn()
@@ -40,7 +40,7 @@ describe('HU-4: Pruebas TDD Panel Personal', () => {
   const renderComponent = () => {
     return render(
       <MemoryRouter>
-        <GaleriaParticipacion />
+        <ParticipacionSorteos />
       </MemoryRouter>
     )
   }
