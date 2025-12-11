@@ -284,6 +284,11 @@ class PurchaseViewSet(
                 continue  # Payment has no receipt (e.g., online payment or incomplete)
 
         purchase.details.update(status=Purchase.Status.CANCELED)
+
+        # Clear prefetch cache to ensure update_status_from_details sees the DB changes
+        if hasattr(purchase, "_prefetched_objects_cache"):
+            purchase._prefetched_objects_cache = {}  # type: ignore
+
         purchase.update_status_from_details()
 
         return Response(status=status.HTTP_200_OK)

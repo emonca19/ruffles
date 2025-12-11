@@ -95,8 +95,8 @@ def test_partial_payment_approval_flow():
     assert d10.status == Purchase.Status.PAID
     assert d11.status == Purchase.Status.PAID
 
-    # Unselected number should be CANCELED
-    assert d12.status == Purchase.Status.CANCELED
+    # Unselected number should remain PENDING (still reserved)
+    assert d12.status == Purchase.Status.PENDING
 
     # Parent purchase status should be PAID (as it contains valid paid items)
     assert purchase.status == Purchase.Status.PAID
@@ -107,7 +107,7 @@ def test_partial_payment_approval_flow():
     availability = get_raffle_availability(raffle)
 
     # 10 and 11 are taken (paid)
-    # 12 should NOT be in taken_numbers (canceled)
+    # 12 is taken (pending)
     assert 10 in availability.taken_numbers
     assert 11 in availability.taken_numbers
-    assert 12 not in availability.taken_numbers
+    assert 12 in availability.taken_numbers

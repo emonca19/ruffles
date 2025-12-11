@@ -29,22 +29,34 @@ class TestCancellation:
     @pytest.fixture
     def pending_purchase(self, raffle, user_factory):
         customer = user_factory(email="buyer@example.com")
-        return Purchase.objects.create(
+        p = Purchase.objects.create(
             raffle=raffle,
             customer=customer,
             status=Purchase.Status.PENDING,
             total_amount=10.00,
         )
+        from apps.purchases.models import PurchaseDetail
+
+        PurchaseDetail.objects.create(purchase=p, number=1, unit_price=10.00)
+        return p
 
     @pytest.fixture
     def guest_purchase(self, raffle):
-        return Purchase.objects.create(
+        p = Purchase.objects.create(
             raffle=raffle,
             guest_name="Guest User",
             guest_phone="1234567890",
             status=Purchase.Status.PENDING,
             total_amount=10.00,
         )
+        from apps.purchases.models import PurchaseDetail
+
+        PurchaseDetail.objects.create(purchase=p, number=2, unit_price=10.00)
+        return p
+        from apps.purchases.models import PurchaseDetail
+
+        PurchaseDetail.objects.create(purchase=p, number=2, unit_price=10.00)
+        return p
 
     def test_customer_cancel_own_reservation(self, api_client, pending_purchase):
         """Story 10: Authenticated customer can cancel their own pending reservation."""
@@ -120,7 +132,7 @@ class TestCancellation:
 
         # Should be Bad Request or Conflict, logic dictates we can't just release it
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "cannot cancel" in str(response.data).lower()
+        assert "no se puede cancelar" in str(response.data).lower()
 
     def test_idempotency_cancel_already_canceled(self, api_client, pending_purchase):
         """Validation: Canceling an already canceled purchase is successful (idempotent)."""

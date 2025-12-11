@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 from django.urls import reverse
+from django.utils import timezone
 
 import pytest
 from rest_framework import status
@@ -27,23 +29,27 @@ class TestCreateRaffle:
         """Create a minimal valid raffle (201) and ensure organizer/created_by are assigned."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=30)
+        draw = now + timedelta(days=31)
         payload = {
             "name": "Mi Sorteo",
             "number_start": 1,
             "number_end": 100,
             "price_per_number": "10.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-12-31T23:59:59Z",
-            "draw_scheduled_at": "2026-01-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
         }
 
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_201_CREATED
         data = resp.data
         assert data["name"] == "Mi Sorteo"
         r = Raffle.objects.get(id=data["id"])  # type: ignore[arg-type]
-        assert r.organizer_id == organizer_user.id
-        assert r.created_by_id == organizer_user.id
+        assert r.organizer_id == organizer_user.id  # type: ignore
+        assert r.created_by_id == organizer_user.id  # type: ignore
 
     def test_create_missing_required_fields_returns_400(
         self, organizer_user: Any, api_client_with_token
@@ -52,7 +58,7 @@ class TestCreateRaffle:
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
         payload = {"name": "Bad"}
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert any(
             k in resp.data
@@ -65,23 +71,27 @@ class TestCreateRaffle:
         client_user = user_factory(email="client@example.com")
         client: APIClient = api_client_with_token(client_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=2)
+        draw = now + timedelta(days=30)
         payload = {
             "name": "Intentar falsificar organizer",
             "number_start": 1,
             "number_end": 10,
             "price_per_number": "1.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-01-02T00:00:00Z",
-            "draw_scheduled_at": "2025-02-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
             "organizer": other.id,
             "created_by": other.id,
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_201_CREATED
         data = resp.data
         r = Raffle.objects.get(id=data["id"])  # type: ignore[arg-type]
-        assert r.organizer_id == client_user.id
-        assert r.created_by_id == client_user.id
+        assert r.organizer_id == client_user.id  # type: ignore
+        assert r.created_by_id == client_user.id  # type: ignore
 
     def test_validation_error_number_range(
         self, organizer_user: Any, api_client_with_token
@@ -89,16 +99,20 @@ class TestCreateRaffle:
         """number_start >= number_end should produce a validation error (400)."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=30)
+        draw = now + timedelta(days=31)
         payload = {
             "name": "Invalid range",
             "number_start": 10,
             "number_end": 1,
             "price_per_number": "5.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-02-01T00:00:00Z",
-            "draw_scheduled_at": "2025-03-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "number_end" in resp.data
 
@@ -108,16 +122,20 @@ class TestCreateRaffle:
         """Negative price_per_number should return 400 and include an error for price_per_number."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=30)
+        draw = now + timedelta(days=31)
         payload = {
             "name": "Negative price",
             "number_start": 1,
             "number_end": 10,
             "price_per_number": "-1.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-01-02T00:00:00Z",
-            "draw_scheduled_at": "2025-02-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "price_per_number" in resp.data
 
@@ -127,16 +145,20 @@ class TestCreateRaffle:
         """sale_start_at >= sale_end_at should return 400 with error on sale_end_at."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=10)
+        end = now + timedelta(days=1)  # Invalid: end before start
+        draw = now + timedelta(days=30)
         payload = {
             "name": "Bad sale window",
             "number_start": 1,
             "number_end": 10,
             "price_per_number": "2.00",
-            "sale_start_at": "2025-02-01T00:00:00Z",
-            "sale_end_at": "2025-01-01T00:00:00Z",
-            "draw_scheduled_at": "2025-03-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "sale_end_at" in resp.data
 
@@ -146,16 +168,20 @@ class TestCreateRaffle:
         """draw_scheduled_at must be after sale_end_at; otherwise return 400 with error on draw_scheduled_at."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=30)
+        draw = now + timedelta(days=15)  # draw is before end
         payload = {
             "name": "Draw too early",
             "number_start": 1,
             "number_end": 10,
             "price_per_number": "3.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-02-01T00:00:00Z",
-            "draw_scheduled_at": "2025-01-15T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "draw_scheduled_at" in resp.data
 
@@ -165,16 +191,20 @@ class TestCreateRaffle:
         """If winner_number is provided and out of the configured range, return 400 with error on winner_number."""
         client: APIClient = api_client_with_token(organizer_user)
         url = reverse("organizer-raffle-list")
+        now = timezone.now()
+        start = now + timedelta(days=1)
+        end = now + timedelta(days=30)
+        draw = now + timedelta(days=31)
         payload = {
             "name": "Winner out of range",
             "number_start": 1,
             "number_end": 10,
             "price_per_number": "4.00",
-            "sale_start_at": "2025-01-01T00:00:00Z",
-            "sale_end_at": "2025-02-01T00:00:00Z",
-            "draw_scheduled_at": "2025-03-01T00:00:00Z",
+            "sale_start_at": start.isoformat(),
+            "sale_end_at": end.isoformat(),
+            "draw_scheduled_at": draw.isoformat(),
             "winner_number": 999,
         }
-        resp: Response = client.post(url, payload, format="json")
+        resp: Response = client.post(url, payload, format="multipart")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "winner_number" in resp.data

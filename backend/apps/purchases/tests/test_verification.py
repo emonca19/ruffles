@@ -58,20 +58,23 @@ class TestVerification:
         return Purchase.objects.create(
             raffle=raffle,
             customer=customer,
-            total_amount=20.00,
+            total_amount=10.00,
             status=Purchase.Status.PENDING,
         )
 
     @pytest.fixture
     def payment_with_receipt(self, purchase):
-        payment = Payment.objects.create(
-            purchase=purchase,
-            amount=purchase.total_amount,
-        )
+        # Create PurchaseDetail to ensure status update logic works
+        from apps.purchases.models import PurchaseDetail
+
+        PurchaseDetail.objects.create(purchase=purchase, number=3, unit_price=10.00)
+
+        payment = Payment.objects.create(purchase=purchase, amount=10.00)
         return PaymentWithReceipt.objects.create(
             payment=payment,
             receipt_image="receipts/test.jpg",
             verification_status=PaymentWithReceipt.VerificationStatus.PENDING,
+            selected_numbers=[3],
         )
 
     def test_list_verifications_organizer(
@@ -130,7 +133,7 @@ class TestVerification:
         )
         assert payment_with_receipt.verified_by == organizer
 
-        # Purchase status should NOT change to paid
+        # Purchase status stays PENDING (reverted to reservation)
         purchase = payment_with_receipt.payment.purchase
         purchase.refresh_from_db()
         assert purchase.status == Purchase.Status.PENDING

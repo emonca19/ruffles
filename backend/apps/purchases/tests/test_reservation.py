@@ -87,7 +87,7 @@ class ReservationTests(APITestCase):
         data = {"raffle_id": self.raffle.id, "numbers": [10, 12]}  # type: ignore
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("available", str(response.data))
+        self.assertIn("disponible", str(response.data))
 
     def test_reservation_guest_info_missing(self):
         """

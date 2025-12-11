@@ -22,6 +22,8 @@ def get_raffle_availability(raffle: Raffle) -> RaffleAvailability:
         PurchaseDetail.objects.filter(purchase__raffle=raffle)
         .exclude(status=Purchase.Status.CANCELED)
         .exclude(status=Purchase.Status.EXPIRED)
+        .exclude(purchase__status=Purchase.Status.CANCELED)
+        .exclude(purchase__status=Purchase.Status.EXPIRED)
         .values_list("number", flat=True)
         .order_by("number")
         .distinct()
