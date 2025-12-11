@@ -62,6 +62,7 @@ class Purchase(models.Model):
         null=True,
         blank=True,
     )
+    details: models.QuerySet[PurchaseDetail]  # type: ignore
     guest_name = models.CharField(max_length=255, blank=True, default="")
     guest_phone = models.CharField(max_length=20, blank=True, default="")
     guest_email = models.EmailField(blank=True, default="")
@@ -100,6 +101,34 @@ class Purchase(models.Model):
                 "La compra debe tener un cliente registrado o un número de teléfono de invitado."
             )
 
+    def update_status_from_details(self) -> None:
+        """
+        Updates the parent Purchase status based on the aggregate status of its details.
+        Rule:
+        - If ALL are PAID -> PAID
+        - If ALL are CANCELED -> CANCELED
+        - If ALL are EXPIRED -> EXPIRED
+        - If ALL are PENDING -> PENDING
+        - If Mixed (e.g. PAID + CANCELED) -> PAID (We treat partial payment as a success for the purchase)
+        """
+        details = list(self.details.all())  # type: ignore[attr-defined]
+        if not details:
+            return
+
+        statuses = {d.status for d in details}
+
+        if len(statuses) == 1:
+            self.status = statuses.pop()
+        elif self.Status.PAID in statuses:
+            # If at least one ticket is paid, the purchase is considered "Fulfilled/Paid" in terms of "Active Business"
+            # The unpaid ones will be marked canceled.
+            self.status = self.Status.PAID
+        else:
+            # Fallback (e.g., Pending + Canceled -> Pending until resolved)
+            self.status = self.Status.PENDING
+
+        self.save(update_fields=["status"])
+
 
 class PurchaseDetail(models.Model):
     purchase: models.ForeignKey[Purchase]
@@ -112,6 +141,11 @@ class PurchaseDetail(models.Model):
     number = models.PositiveIntegerField()
     unit_price = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=Purchase.Status.choices,
+        default=Purchase.Status.PENDING,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

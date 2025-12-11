@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import ClassVar, Self
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -36,6 +35,7 @@ class RaffleManager(models.Manager["Raffle"]):
 
 
 class Raffle(models.Model):
+    id: int
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
     image = models.ImageField(upload_to="raffles/", blank=True)
@@ -111,9 +111,11 @@ class Raffle(models.Model):
             )
 
         if self.sale_start_at:
-            start_hermosillo = self.sale_start_at.astimezone(timezone.get_current_timezone())
+            start_hermosillo = self.sale_start_at.astimezone(
+                timezone.get_current_timezone()
+            )
             now_hermosillo = timezone.now().astimezone(timezone.get_current_timezone())
-            
+
             if start_hermosillo.date() < now_hermosillo.date():
                 errors["sale_start_at"] = (
                     "La fecha de inicio de venta no puede ser anterior a hoy (hora de Hermosillo)."

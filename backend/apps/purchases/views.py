@@ -139,7 +139,6 @@ class PurchaseViewSet(
         parser_classes=[parsers.MultiPartParser],
         url_path="upload_receipt",
     )
-    
     @action(
         detail=True,
         methods=["post"],
@@ -168,7 +167,9 @@ class PurchaseViewSet(
         serializer.is_valid(raise_exception=True)
 
         receipt_image = serializer.validated_data["receipt_image"]
-        numbers = serializer.validated_data["numbers"]  # 🔹 SOLO los números seleccionados
+        numbers = serializer.validated_data[
+            "numbers"
+        ]  # 🔹 SOLO los números seleccionados
 
         # 🔹 Validar que esos números pertenezcan a la compra
         valid_numbers = set(purchase.details.values_list("number", flat=True))
@@ -200,7 +201,6 @@ class PurchaseViewSet(
         )
 
         return Response(status=status.HTTP_201_CREATED)
-
 
     @extend_schema(
         tags=["Purchases"],
@@ -259,8 +259,8 @@ class PurchaseViewSet(
             except PaymentWithReceipt.DoesNotExist:
                 continue  # Payment has no receipt (e.g., online payment or incomplete)
 
-        purchase.status = Purchase.Status.CANCELED
-        purchase.save()
+        purchase.details.update(status=Purchase.Status.CANCELED)
+        purchase.update_status_from_details()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -327,6 +327,19 @@ class VerificationViewSet(viewsets.GenericViewSet):
         action_val = serializer.validated_data["action"]
 
         if action_val == "approve":
+            # 1. Update status of selected numbers to PAID
+            selected_numbers = receipt.selected_numbers
+
+            # Use filter to update efficiently
+            receipt.payment.purchase.details.filter(number__in=selected_numbers).update(
+                status=Purchase.Status.PAID
+            )
+
+            # 2. Update status of UNSELECTED numbers to CANCELED (release them)
+            receipt.payment.purchase.details.exclude(
+                number__in=selected_numbers
+            ).update(status=Purchase.Status.CANCELED)
+
             receipt.mark_verified(
                 PaymentWithReceipt.VerificationStatus.APPROVED,
                 verified_at=timezone.now(),
@@ -334,10 +347,8 @@ class VerificationViewSet(viewsets.GenericViewSet):
             receipt.verified_by = user
             receipt.save()
 
-            # Mark purchase as PAID
-            purchase = receipt.payment.purchase
-            purchase.status = Purchase.Status.PAID
-            purchase.save()
+            # 3. Sync parent purchase status
+            receipt.payment.purchase.update_status_from_details()
 
         elif action_val == "reject":
             # 1. Marcar el comprobante como RECHAZADO
@@ -348,8 +359,11 @@ class VerificationViewSet(viewsets.GenericViewSet):
             receipt.verified_by = user
             receipt.save()
 
-            purchase = receipt.payment.purchase
-            purchase.status = Purchase.Status.CANCELED  
-            purchase.save()                            
+            # 2. Cancel ALL details associated with this purchase (or specifically this payment context??)
+            # Generally if a receipt is rejected, the purchase is dead unless they upload another one.
+            # But usually rejection implies releasing the numbers.
+            receipt.payment.purchase.details.update(status=Purchase.Status.CANCELED)
+
+            receipt.payment.purchase.update_status_from_details()
 
         return Response(VerificationReadSerializer(receipt).data)

@@ -20,7 +20,8 @@ def get_raffle_availability(raffle: Raffle) -> RaffleAvailability:
     # We don't need customer info anymore for the public endpoint
     taken_numbers = (
         PurchaseDetail.objects.filter(purchase__raffle=raffle)
-        .exclude(purchase__status=Purchase.Status.CANCELED)
+        .exclude(status=Purchase.Status.CANCELED)
+        .exclude(status=Purchase.Status.EXPIRED)
         .values_list("number", flat=True)
         .order_by("number")
         .distinct()

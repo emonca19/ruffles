@@ -75,7 +75,10 @@ def create_reservation(
         # 5. Create Details
         details = [
             PurchaseDetail(
-                purchase=purchase, number=num, unit_price=raffle.price_per_number
+                purchase=purchase,
+                number=num,
+                unit_price=raffle.price_per_number,
+                status=Purchase.Status.PENDING,
             )
             for num in numbers
         ]

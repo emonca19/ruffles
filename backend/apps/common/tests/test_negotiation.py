@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.urls import path
 
 import pytest
@@ -13,7 +15,7 @@ class ChoiceSerializer(serializers.Serializer):
 
 
 class MockView(APIView):
-    permission_classes = []
+    permission_classes: ClassVar[list] = []
 
     def post(self, request):
         serializer = ChoiceSerializer(data=request.data)
