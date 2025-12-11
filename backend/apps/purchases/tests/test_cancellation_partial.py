@@ -77,9 +77,9 @@ def test_cancel_partial_paid_purchase():
 
     print(f"\nResponse: {response.status_code} {response.data}")
 
-    assert (
-        response.status_code == 200
-    ), "Should allow cancelling pending tickets even if purchase is marked PAID"
+    assert response.status_code == 200, (
+        "Should allow cancelling pending tickets even if purchase is marked PAID"
+    )
 
     # 3. Verify Detail Statuses
     d1.refresh_from_db()
