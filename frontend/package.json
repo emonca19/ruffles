@@ -26,7 +26,7 @@
     "test:prueba_componente":"vitest run src/service/prueba_componente_seleccion.test.jsx",
     "test:prueba_renderizado_admin":"vitest run src/service/renderizado_admin.test.jsx",
     "test:prueba_visor_comprobante" : "vitest run src/service/visor_comprobante.test.jsx",
-    "test:prueba_raffles":"vitest run src/service/raffles.test.jsx"
+    "test:prueba_raffles":"vitest run src/service/raffles.test.jsx",
     "test:all": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
