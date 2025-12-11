@@ -9,7 +9,7 @@ const getToken = () => localStorage.getItem('authToken');
 
 // Función auxiliar para mapear el estado al texto de UI
 const mapStatusToUI = (status) => {
-    switch (status?.toLowerCase()) {
+  switch (status?.toLowerCase()) {
     case 'approved':
       return 'APROBADO';
     case 'rejected':
@@ -47,7 +47,7 @@ export default function DetalleComprobante() {
     );
   }
 
-  // ✅ FUNCIÓN CORREGIDA: Ahora realiza la llamada a la API
+  // FUNCIÓN CORREGIDA: Ahora realiza la llamada a la API
   const handleVerification = async (action) => {
     setIsLoading(true);
     const token = getToken();
