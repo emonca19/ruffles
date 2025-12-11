@@ -28,9 +28,9 @@ function App() {
         <Route path="/registroUsuario" element={<RegistroUsuario />} />
         <Route path="/participacion" element={<ParticipacionSorteos />} />
         <Route path="/galeria" element={<GaleriaSorteos />} />
-        <Route path="/participacion/detalle/:id" element={<ParticipacionDetalle />} />
+        <Route path="/participacion/detalle/:id" element={<ParticipacionDetalle />} /> {/* Envio Conmprobante usuario */}
         <Route path="/galeriaEvidencia" element={<GaleriaEvidencia />} />
-        <Route path="/verificacion/detalle/:id" element={<DetalleComprobante />} />
+        <Route path="/verificacion/detalle/:id" element={<DetalleComprobante />} /> {/* ACPETAR/RECHAZAR rganizador */}
         </Route>
 
         
