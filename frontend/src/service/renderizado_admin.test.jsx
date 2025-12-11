@@ -217,7 +217,6 @@ describe('GaleriaEvidencias - Pruebas TDD para columnas Cliente y Fecha', () => 
     test('muestra error cuando falla la API', async () => {
       // ARRANGE - Mockear error (sin reintentos exitosos)
       // El componente intenta 3 veces, así que necesitamos que falle 3 veces
-      let callCount = 0
       global.fetch.mockImplementation(() => {
         callCount++
         return Promise.resolve({

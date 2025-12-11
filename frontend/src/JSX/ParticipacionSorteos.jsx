@@ -111,7 +111,7 @@ export default function ParticipacionSorteos() {
 
             if (!response.ok && response.status !== 404) {
                 let errorDetails = await response.text();
-                try { errorDetails = JSON.parse(errorDetails); } catch (e) { /* ignore */ }
+                try { errorDetails = JSON.parse(errorDetails); } catch (_) { /* ignore */ }
 
                 throw new Error(`Error ${response.status}: ${typeof errorDetails === 'object' ? JSON.stringify(errorDetails, null, 2) : errorDetails}`);
             }

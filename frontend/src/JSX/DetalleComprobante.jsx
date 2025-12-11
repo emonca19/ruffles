@@ -79,7 +79,7 @@ export default function DetalleComprobante() {
         try {
           const errorData = await response.json();
           errorMsg = errorData.detail || errorMsg;
-        } catch (e) {
+        } catch (_) {
             
         }
         throw new Error(errorMsg);

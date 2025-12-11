@@ -158,7 +158,7 @@ export default function GaleriaEvidencias() {
                     try {
                         const errorData = JSON.parse(rawResponseText);
                         errorMsg = errorData.detail || errorData.non_field_errors?.[0] || errorMsg;
-                    } catch (e) {
+                    } catch (_) {
                         console.error("Respuesta no JSON:", rawResponseText.substring(0, 100) + '...');
                     }
 
