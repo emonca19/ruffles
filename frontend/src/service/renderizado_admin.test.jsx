@@ -218,7 +218,6 @@ describe('GaleriaEvidencias - Pruebas TDD para columnas Cliente y Fecha', () => 
       // ARRANGE - Mockear error (sin reintentos exitosos)
       // El componente intenta 3 veces, así que necesitamos que falle 3 veces
       global.fetch.mockImplementation(() => {
-        callCount++
         return Promise.resolve({
           ok: false,
           status: 500,

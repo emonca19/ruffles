@@ -132,7 +132,7 @@ export default function ParticipacionDetalle() {
             if (!resp.ok) {
                 const errorText = await resp.text();
                 let errorJson;
-                try { errorJson = JSON.parse(errorText); } catch(_) {}
+                try { errorJson = JSON.parse(errorText); /* eslint-disable-next-line no-unused-vars, no-empty */ } catch (_) {}
                 
                 const mensaje = errorJson?.detail || "Fallo en el servidor (Revisa logs de Django).";
                 throw new Error(`Error ${resp.status}: ${mensaje}`);
@@ -179,7 +179,7 @@ export default function ParticipacionDetalle() {
         if (!resp.ok) {
             const errorText = await resp.text();
             let errorJson;
-            try { errorJson = JSON.parse(errorText); } catch(_) {}
+            try { errorJson = JSON.parse(errorText); /* eslint-disable-next-line no-unused-vars, no-empty */ } catch (_) {}
             
             const mensaje = errorJson?.detail || "Fallo en el servidor al cancelar.";
             throw new Error(`Error ${resp.status}: ${mensaje}`);

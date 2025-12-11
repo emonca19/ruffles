@@ -194,7 +194,7 @@ export default function GaleriaEvidencias() {
     // Hook para cargar los datos al montar el componente
     useEffect(() => {
         fetchEvidencias();
-    }, []); 
+    }, [fetchEvidencias]); 
 
     return (
         // Contenedor principal

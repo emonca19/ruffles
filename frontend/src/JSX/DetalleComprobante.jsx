@@ -79,9 +79,7 @@ export default function DetalleComprobante() {
         try {
           const errorData = await response.json();
           errorMsg = errorData.detail || errorMsg;
-        } catch (_) {
-            
-        }
+        /* eslint-disable-next-line no-unused-vars, no-empty */ } catch (_) {}
         throw new Error(errorMsg);
       }
 
